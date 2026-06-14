@@ -109,9 +109,19 @@ async def analyze(file: UploadFile = File(None), log_text: Optional[str] = Form(
     }
 
 
-@app.get("/report/csv")
-async def download_csv_report(log_text: str):
-    entries = parse_text(log_text)
+@app.post("/report")
+async def download_report(log_text: str = Form(None), file: UploadFile = File(None)):
+    content = ""
+
+    if file and file.filename:
+        content = (await file.read()).decode("utf-8", errors="replace")
+    elif log_text:
+        content = log_text
+
+    if not content.strip():
+        return {"error": "No log data provided"}
+
+    entries = parse_text(content)
 
     anomaly_detector = AnomalyDetector(error_threshold=3)
     anomalies = anomaly_detector.analyze(entries)
@@ -126,6 +136,6 @@ async def download_csv_report(log_text: str):
 
     return StreamingResponse(
         io.BytesIO(report.encode("utf-8")),
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=log_analysis_report.csv"},
+        media_type="text/plain",
+        headers={"Content-Disposition": "attachment; filename=log_analysis_report.txt"},
     )
