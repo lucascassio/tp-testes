@@ -16,7 +16,7 @@ class LogEntry:
     http_referer: str
     http_user_agent: str
     request_time: float = 0.0
-    raw_line: str = field(repr=False)
+    raw_line: str = field(default="", repr=False)
 
     @property
     def endpoint(self) -> str:
