@@ -88,12 +88,58 @@ Acesse http://localhost:8000 no navegador.
 └── README.md
 ```
 
-## 6. CI/CD e Cobertura
+## 6. Evidência do Valor dos Testes Automatizados
+
+A arquitetura do sistema foi projetada com **separação estrita de responsabilidades**, o que permite testar cada camada de forma isolada e garante que mudanças em um módulo não quebrem outros. Esta seção demonstra, com exemplos concretos, como a suíte de testes previne regressões.
+
+### 6.1 Camadas Independentes e Testáveis
+
+| Camada | Módulo | O que testa | Por que é importante |
+|--------|--------|-------------|---------------------|
+| Parsing | `parser.py` | Interpretação de cada linha de log | Erros de parsing quebrariam toda análise |
+| Negócio | `analyzers.py` | Regras de anomalia, performance, segurança | Lógica crítica que não pode regredir |
+| Relatório | `reporters.py` | Geração de CSV/relatórios | Formato de saída deve ser consistente |
+| Infra/API | `main.py` | Endpoints HTTP, upload, respostas | Interface com o usuário final |
+
+### 6.2 Edge Cases Cobertos pelo Parser (25 testes)
+
+O parser é a porta de entrada. Se falhar, tudo falha. Por isso é o módulo com mais testes:
+
+| Edge Case | Exemplo de Entrada | Comportamento Esperado | Evita |
+|-----------|-------------------|----------------------|-------|
+| Linha vazia | `""` | Retorna `None` | Crash ao processar arquivos com linhas em branco |
+| Linha malformada | `"texto qualquer"` | Retorna `None` | Interpretar lixo como log válido |
+| IPv6 | `::1 - - [...]` | Extrai `::1` corretamente | Ignorar tráfego IPv6 |
+| URL com espaços | `/search?q=hello world` | Preserva espaços na URL | Perder parte da query string |
+| Request sem HTTP | `GET /api/data` | Protocol vazio, path preservado | Falhar em formatos não-padrão |
+| Timestamp inválido | `"not-a-date"` | `timestamp = None` | Crash na conversão de data |
+| Response time não numérico | `"slow"` como último campo | `request_time = 0.0` | Crash na conversão numérica |
+| Status code não numérico | `ABC` como status | Retorna `None` (linha inválida) | Corromper estatísticas |
+
+### 6.3 Exemplo Concreto de Prevenção de Regressão
+
+Durante o desenvolvimento, o `parse_request()` original usava `split(" ", 2)` para separar método, path e protocolo. Isso funcionava para URLs simples como `/api/users`, mas **quebrava silenciosamente** com URLs contendo espaços (ex: `/search?q=hello world`), truncando o path.
+
+O teste `test_request_with_spaces_in_url` foi adicionado especificamente para este caso:
+
+```python
+def test_request_with_spaces_in_url(self):
+    m, p, proto = parse_request("GET /search?q=hello world HTTP/1.1")
+    assert p == "/search?q=hello world"  # Garante path completo
+```
+
+Após refatorar `parse_request()` para usar um algoritmo que identifica o protocolo pelo último token (em vez de assumir 3 tokens fixos), **todos os 25 testes do parser continuaram passando**, comprovando que a refatoração não introduziu regressões.
+
+### 6.4 Cobertura como Rede de Segurança
+
+A suíte atual conta com **78 testes** (70 unitários + 8 integração) e **99% de cobertura de código**. Cada linha não coberta é uma oportunidade para um bug não detectado. As 2 linhas restantes não cobertas (`parser.py:42,88-89`) são branches defensivos para casos extremos de arrays vazios que exigiriam manipulação interna da implementação para serem acionados.
+
+## 7. CI/CD e Cobertura
 Os testes são executados automaticamente a cada commit via **GitHub Actions** nos sistemas operacionais **Linux**, **macOS** e **Windows**. O relatório de cobertura é enviado para o **Codecov**.
 
 [![Tests](https://github.com/lucascassio/log-analyzer/actions/workflows/tests.yml/badge.svg)](https://github.com/lucascassio/log-analyzer/actions/workflows/tests.yml)
 [![codecov](https://codecov.io/github/lucascassio/log-analyzer/branch/main/graph/badge.svg)](https://codecov.io/github/lucascassio/log-analyzer)
 
-## 7. Métricas de Teste
-- **70 testes** no total (62 unitários + 8 integração)
-- **95% de cobertura** de código
+## 8. Métricas de Teste
+- **78 testes** no total (70 unitários + 8 integração)
+- **99% de cobertura** de código
