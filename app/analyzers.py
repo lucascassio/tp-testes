@@ -1,3 +1,4 @@
+import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 
@@ -98,3 +99,39 @@ class PerformanceAnalyzer:
 
         results.sort(key=lambda x: x.avg_response_time, reverse=True)
         return results
+
+
+@dataclass
+class SecurityAlert:
+    path: str
+    method: str
+    ip: str
+    pattern_type: str
+    matched_content: str
+
+
+class SecurityAuditor:
+    PATTERNS: dict[str, str] = {
+        "SQL Injection": r"(\bUNION\b|\bSELECT\b|\bDROP\b|\bINSERT\b|\bDELETE\b|\bUPDATE\b|--|\bOR\b\s+['\"]?\d['\"]?\s*=\s*['\"]?\d|')",
+        "XSS": r"(<script|javascript:|onerror=|onload=|alert\(|document\.cookie)",
+        "Path Traversal": r"(\.\./|\.\.\\|%2e%2e%2f|%2e%2e/)",
+    }
+
+    def audit(self, entries: list[LogEntry]) -> list[SecurityAlert]:
+        alerts: list[SecurityAlert] = []
+
+        for entry in entries:
+            for pattern_type, pattern in self.PATTERNS.items():
+                match = re.search(pattern, entry.path, re.IGNORECASE)
+                if match:
+                    alerts.append(
+                        SecurityAlert(
+                            path=entry.path,
+                            method=entry.method,
+                            ip=entry.remote_addr,
+                            pattern_type=pattern_type,
+                            matched_content=match.group(0),
+                        )
+                    )
+
+        return alerts
