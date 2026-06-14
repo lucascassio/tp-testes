@@ -20,6 +20,7 @@ class TestParseLine:
     LOG_NO_RT = '192.168.1.1 - - [10/Oct/2023:13:55:36 -0300] "GET /api/users HTTP/1.1" 200 1234 "-" "Mozilla/5.0"'
     LOG_NEGATIVE_SIZE = '10.0.0.7 - - [10/Oct/2023:14:06:00 -0300] "GET / HTTP/1.1" 200 -1 "-" "Mozilla/5.0"'
     LOG_BAD_STATUS = '10.0.0.7 - - [10/Oct/2023:14:06:00 -0300] "GET / HTTP/1.1" ABC 100 "-" "Mozilla/5.0"'
+    LOG_NON_NUMERIC_RT = '10.0.0.8 - - [10/Oct/2023:14:07:00 -0300] "GET / HTTP/1.1" 200 100 "-" "Mozilla/5.0" slow'
 
     def test_parse_valid_log_with_all_fields(self):
         entry = parse_line(self.LOG_OK)
@@ -101,6 +102,11 @@ class TestParseLine:
         assert isinstance(entry.status, int)
         assert isinstance(entry.body_bytes_sent, int)
         assert isinstance(entry.request_time, float)
+
+    def test_non_numeric_request_time_defaults_to_zero(self):
+        entry = parse_line(self.LOG_NON_NUMERIC_RT)
+        assert entry is not None
+        assert entry.request_time == 0.0
 
 
 class TestParseText:
