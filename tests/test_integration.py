@@ -81,3 +81,27 @@ class TestReportEndpoint:
         assert "TRAFFIC ANOMALIES" in content
         assert "PERFORMANCE ANALYSIS" in content
         assert "SECURITY AUDIT" in content
+
+    def test_report_with_no_data_returns_error(self):
+        response = client.post("/report", data={"log_text": ""})
+        assert response.status_code == 200
+        assert "error" in response.json()
+
+
+class TestFileUpload:
+    def test_analyze_with_file_upload(self):
+        response = client.post(
+            "/analyze",
+            files={"file": ("test.log", SAMPLE_LOG.encode(), "text/plain")},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total_entries"] == 5
+
+    def test_report_with_file_upload(self):
+        response = client.post(
+            "/report",
+            files={"file": ("test.log", SAMPLE_LOG.encode(), "text/plain")},
+        )
+        assert response.status_code == 200
+        assert "TRAFFIC ANOMALIES" in response.text
