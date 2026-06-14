@@ -176,3 +176,21 @@ class TestParseRequest:
         assert m == "GET"
         assert p == "https://example.com/page"
         assert proto == "HTTP/1.1"
+
+    def test_request_without_http_protocol(self):
+        m, p, proto = parse_request("GET /api/data")
+        assert m == "GET"
+        assert p == "/api/data"
+        assert proto == ""
+
+    def test_request_single_word(self):
+        m, p, proto = parse_request("GET")
+        assert m == "GET"
+        assert p == ""
+        assert proto == ""
+
+    def test_request_with_spaces_in_url(self):
+        m, p, proto = parse_request("GET /search?q=hello world HTTP/1.1")
+        assert m == "GET"
+        assert p == "/search?q=hello world"
+        assert proto == "HTTP/1.1"
