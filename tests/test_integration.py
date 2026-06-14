@@ -112,3 +112,28 @@ class TestFileUpload:
         )
         assert response.status_code == 200
         assert "TRAFFIC ANOMALIES" in response.text
+
+
+class TestSamplesEndpoint:
+    def test_list_samples_returns_all_scenarios(self):
+        response = client.get("/samples")
+        assert response.status_code == 200
+        samples = response.json()
+        assert len(samples) == 7
+        keys = {s["key"] for s in samples}
+        assert "normal" in keys
+        assert "sqli" in keys
+        assert "full-attack" in keys
+
+    def test_get_sample_returns_log_text(self):
+        response = client.get("/samples/sqli")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["label"] == "SQL Injection Attacks"
+        assert "UNION" in data["log_text"]
+        assert "45.33.32.156" in data["log_text"]
+
+    def test_get_unknown_sample_returns_error(self):
+        response = client.get("/samples/doesnotexist")
+        assert response.status_code == 200
+        assert "error" in response.json()
