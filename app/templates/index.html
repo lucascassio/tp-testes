@@ -7,56 +7,57 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #c9d1d9; min-height: 100vh; }
-        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         header { text-align: center; padding: 30px 0 20px; border-bottom: 1px solid #21262d; margin-bottom: 24px; }
         header h1 { font-size: 2rem; color: #58a6ff; }
         header p { color: #8b949e; margin-top: 6px; }
 
-        .upload-area { border: 2px dashed #30363d; border-radius: 12px; padding: 32px; text-align: center; transition: all .2s; margin-bottom: 16px; }
+        .upload-area { border: 2px dashed #30363d; border-radius: 12px; padding: 24px; text-align: center; transition: all .2s; margin-bottom: 12px; }
         .upload-area.dragover { border-color: #58a6ff; background: rgba(88,166,255,.08); }
         .upload-area input[type=file] { display: none; }
         .upload-area label { cursor: pointer; color: #58a6ff; font-weight: 600; }
 
-        textarea { width: 100%; height: 140px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; color: #c9d1d9; padding: 12px; font-family: monospace; font-size: 0.85rem; resize: vertical; margin-bottom: 12px; }
+        textarea { width: 100%; height: 100px; background: #0d1117; border: 1px solid #30363d; border-radius: 8px; color: #c9d1d9; padding: 10px; font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace; font-size: 0.78rem; resize: vertical; margin-bottom: 10px; line-height: 1.3; }
         .btn { background: #238636; color: #fff; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem; transition: background .15s; }
         .btn:hover { background: #2ea043; }
         .btn:disabled { background: #21262d; color: #484f58; cursor: not-allowed; }
-        .btn-outline { background: transparent; border: 1px solid #30363d; color: #c9d1d9; margin-right: 8px; }
+        .btn-outline { background: transparent; border: 1px solid #30363d; color: #c9d1d9; }
         .btn-outline:hover { background: #21262d; }
 
-        .actions { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+        .actions { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
 
         .tabs { display: flex; gap: 0; border-bottom: 1px solid #21262d; margin-bottom: 16px; }
         .tab { padding: 10px 20px; cursor: pointer; border-bottom: 2px solid transparent; color: #8b949e; font-weight: 500; transition: all .15s; }
         .tab.active { color: #58a6ff; border-bottom-color: #58a6ff; }
         .tab:hover { color: #c9d1d9; }
+        .tab .count { background: #21262d; border-radius: 8px; padding: 0 6px; font-size: 0.7rem; margin-left: 4px; }
 
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #21262d; }
-        th { background: #161b22; color: #8b949e; font-weight: 600; position: sticky; top: 0; }
-        tr:hover { background: rgba(88,166,255,.05); }
-        td:first-child, th:first-child { padding-left: 4px; }
+        .log-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace; }
+        .log-table th { background: #161b22; color: #8b949e; font-weight: 600; position: sticky; top: 0; z-index: 1; padding: 6px 10px; text-align: left; border-bottom: 1px solid #21262d; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .log-table td { padding: 5px 10px; border-bottom: 1px solid #161b22; }
+        .log-table tr:hover td { background: rgba(88,166,255,.04); }
+        .log-table .ip { color: #79c0ff; }
+        .log-table .method-get { color: #7ee787; } .log-table .method-post { color: #d2a8ff; } .log-table .method-put { color: #f0883e; } .log-table .method-delete { color: #f85149; }
+        .log-table .path { color: #e6edf3; max-width: 350px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; }
+        .log-table .status-2xx { color: #7ee787; } .log-table .status-3xx { color: #d2a8ff; } .log-table .status-4xx { color: #d29922; } .log-table .status-5xx { color: #f85149; }
+        .log-table .time-slow { color: #f85149; } .log-table .time-fast { color: #7ee787; }
 
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600; }
-        .badge-4xx { background: rgba(210,153,34,.2); color: #d29922; }
-        .badge-5xx { background: rgba(248,81,73,.2); color: #f85149; }
-        .badge-ok { background: rgba(35,134,54,.2); color: #3fb950; }
+        .alert-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .alert-table th { background: #161b22; color: #8b949e; font-weight: 600; padding: 6px 10px; text-align: left; border-bottom: 1px solid #21262d; font-size: 0.7rem; text-transform: uppercase; }
+        .alert-table td { padding: 6px 10px; border-bottom: 1px solid #161b22; }
+        .alert-table tr.row-danger { background: rgba(248,81,73,.06); }
+        .alert-table tr.row-warn { background: rgba(210,153,34,.06); }
 
         .stat-box { background: #161b22; border: 1px solid #21262d; border-radius: 8px; padding: 16px; }
-        .stat-box h3 { font-size: 0.8rem; text-transform: uppercase; color: #8b949e; margin-bottom: 4px; }
-        .stat-box .number { font-size: 1.8rem; font-weight: 700; color: #58a6ff; }
+        .stat-box h3 { font-size: 0.7rem; text-transform: uppercase; color: #8b949e; margin-bottom: 4px; letter-spacing: 0.5px; }
+        .stat-box .number { font-size: 1.8rem; font-weight: 700; }
+        .stat-box .number.red { color: #f85149; } .stat-box .number.green { color: #3fb950; } .stat-box .number.blue { color: #58a6ff; } .stat-box .number.yellow { color: #d29922; }
 
-        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
-
-        .alert-row { background: rgba(248,81,73,.08); }
-
-        .loading { text-align: center; padding: 40px; color: #8b949e; }
-        .error-msg { background: rgba(248,81,73,.15); border: 1px solid rgba(248,81,73,.3); color: #f85149; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; }
-        .empty-state { text-align: center; padding: 60px 20px; color: #484f58; }
-        .empty-state svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.3; }
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .error-msg { background: rgba(248,81,73,.15); border: 1px solid rgba(248,81,73,.3); color: #f85149; padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; font-size: 0.85rem; }
         .scenario-btn.active-scenario { box-shadow: 0 0 0 2px #58a6ff; }
     </style>
 </head>
@@ -77,13 +78,13 @@
 
     <div class="actions">
         <button class="btn" id="analyzeBtn" onclick="runAnalysis()">Analyze Logs</button>
-        <button class="btn btn-outline" id="clearBtn" onclick="clearAll()">Clear</button>
+        <button class="btn btn-outline" onclick="clearAll()">Clear</button>
     </div>
 
     <div style="margin-bottom: 16px;">
-        <p style="color: #8b949e; font-size: 0.8rem; margin-bottom: 8px; text-transform: uppercase; font-weight: 600;">Demo Scenarios</p>
+        <p style="color: #8b949e; font-size: 0.7rem; margin-bottom: 8px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Demo Scenarios</p>
         <div id="scenarioButtons" style="display: flex; gap: 6px; flex-wrap: wrap;">
-            <span style="color: #484f58;">Loading scenarios...</span>
+            <span style="color: #484f58;">Loading...</span>
         </div>
     </div>
 
@@ -93,39 +94,39 @@
         <div class="stats-row" id="statsRow"></div>
 
         <div class="tabs">
-            <div class="tab active" data-tab="log-entries">Log Entries</div>
-            <div class="tab" data-tab="anomalies">Anomalies</div>
-            <div class="tab" data-tab="performance">Performance</div>
-            <div class="tab" data-tab="security">Security</div>
+            <div class="tab active" data-tab="log-entries">Entries <span class="count" id="entryCount">0</span></div>
+            <div class="tab" data-tab="anomalies">Anomalies <span class="count" id="anomalyCount">0</span></div>
+            <div class="tab" data-tab="performance">Performance <span class="count" id="perfCount">0</span></div>
+            <div class="tab" data-tab="security">Security <span class="count" id="secCount">0</span></div>
         </div>
 
         <div class="tab-content active" id="log-entries">
-            <div style="overflow-x:auto;max-height:500px;overflow-y:auto;">
-                <table>
-                    <thead><tr><th>IP</th><th>Timestamp</th><th>Method</th><th>Path</th><th>Status</th><th>Size</th><th>Time (s)</th></tr></thead>
+            <div style="overflow:auto;max-height:520px;">
+                <table class="log-table">
+                    <thead><tr><th>#</th><th>IP</th><th>Timestamp</th><th>Method</th><th>Path</th><th>Status</th><th>Size</th><th>Time</th></tr></thead>
                     <tbody id="entriesBody"></tbody>
                 </table>
             </div>
         </div>
         <div class="tab-content" id="anomalies">
-            <div style="overflow-x:auto;">
-                <table>
+            <div style="overflow:auto;">
+                <table class="alert-table">
                     <thead><tr><th>IP</th><th>Total Errors</th><th>4xx</th><th>5xx</th><th>Total Requests</th><th>Error Rate</th></tr></thead>
                     <tbody id="anomaliesBody"></tbody>
                 </table>
             </div>
         </div>
         <div class="tab-content" id="performance">
-            <div style="overflow-x:auto;">
-                <table>
-                    <thead><tr><th>Endpoint</th><th>Requests</th><th>Avg Time (s)</th><th>Min (s)</th><th>Max (s)</th></tr></thead>
+            <div style="overflow:auto;">
+                <table class="alert-table">
+                    <thead><tr><th>Endpoint</th><th>Requests</th><th>Avg Time</th><th>Min</th><th>Max</th></tr></thead>
                     <tbody id="performanceBody"></tbody>
                 </table>
             </div>
         </div>
         <div class="tab-content" id="security">
-            <div style="overflow-x:auto;">
-                <table>
+            <div style="overflow:auto;">
+                <table class="alert-table">
                     <thead><tr><th>Path</th><th>Method</th><th>IP</th><th>Pattern</th><th>Matched</th></tr></thead>
                     <tbody id="securityBody"></tbody>
                 </table>
@@ -135,6 +136,8 @@
 </div>
 
 <script>
+    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
     const fileName = document.getElementById('fileName');
@@ -142,8 +145,7 @@
     dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
     dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
     dropZone.addEventListener('drop', e => {
-        e.preventDefault();
-        dropZone.classList.remove('dragover');
+        e.preventDefault(); dropZone.classList.remove('dragover');
         if (e.dataTransfer.files.length) fileInput.files = e.dataTransfer.files;
         updateFileName();
     });
@@ -161,8 +163,7 @@
 
     async function runAnalysis() {
         const btn = document.getElementById('analyzeBtn');
-        btn.disabled = true;
-        btn.textContent = 'Analyzing...';
+        btn.disabled = true; btn.textContent = 'Analyzing...';
         document.getElementById('errorBox').innerHTML = '';
 
         const formData = new FormData();
@@ -175,72 +176,88 @@
             const data = await res.json();
             if (data.error) { showError(data.error); return; }
             renderResults(data);
-        } catch (e) { showError('Failed to connect to server: ' + e.message); }
+        } catch (e) { showError('Failed to connect: ' + esc(e.message)); }
         finally { btn.disabled = false; btn.textContent = 'Analyze Logs'; }
     }
 
     function showError(msg) {
-        document.getElementById('errorBox').innerHTML = `<div class="error-msg">${msg}</div>`;
+        document.getElementById('errorBox').innerHTML = '<div class="error-msg">' + esc(msg) + '</div>';
         document.getElementById('results').style.display = 'none';
     }
+
+    function statusClass(s) { return s >= 500 ? 'status-5xx' : s >= 400 ? 'status-4xx' : s >= 300 ? 'status-3xx' : 'status-2xx'; }
+    function methodClass(m) { return 'method-' + m.toLowerCase(); }
+    function timeClass(t) { return t > 1.0 ? 'time-slow' : 'time-fast'; }
 
     function renderResults(data) {
         document.getElementById('results').style.display = 'block';
 
-        document.getElementById('statsRow').innerHTML = `
-            <div class="stat-box"><h3>Total Entries</h3><div class="number">${data.total_entries}</div></div>
-            <div class="stat-box"><h3>Anomalies</h3><div class="number">${data.anomalies.length}</div></div>
-            <div class="stat-box"><h3>Endpoints</h3><div class="number">${data.performance.length}</div></div>
-            <div class="stat-box"><h3>Security Alerts</h3><div class="number">${data.security.length}</div></div>
-        `;
+        document.getElementById('statsRow').innerHTML =
+            '<div class="stat-box"><h3>Entries</h3><div class="number blue">' + data.total_entries + '</div></div>' +
+            '<div class="stat-box"><h3>Anomalies</h3><div class="number' + (data.anomalies.length ? ' red' : ' green') + '">' + data.anomalies.length + '</div></div>' +
+            '<div class="stat-box"><h3>Endpoints</h3><div class="number blue">' + data.performance.length + '</div></div>' +
+            '<div class="stat-box"><h3>Security</h3><div class="number' + (data.security.length ? ' yellow' : ' green') + '">' + data.security.length + '</div></div>';
 
-        const statusBadge = s => s >= 500 ? 'badge-5xx' : s >= 400 ? 'badge-4xx' : 'badge-ok';
-        document.getElementById('entriesBody').innerHTML = data.entries.map(e => `
-            <tr>
-                <td><code>${e.remote_addr}</code></td>
-                <td>${e.timestamp || '-'}</td>
-                <td>${e.method}</td>
-                <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.path}</td>
-                <td><span class="badge ${statusBadge(e.status)}">${e.status}</span></td>
-                <td>${e.body_bytes_sent}</td>
-                <td>${e.request_time.toFixed(4)}</td>
-            </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;color:#484f58;">No entries</td></tr>';
+        document.getElementById('entryCount').textContent = data.total_entries;
+        document.getElementById('anomalyCount').textContent = data.anomalies.length;
+        document.getElementById('perfCount').textContent = data.performance.length;
+        document.getElementById('secCount').textContent = data.security.length;
 
-        document.getElementById('anomaliesBody').innerHTML = data.anomalies.map(a => `
-            <tr class="alert-row">
-                <td><code>${a.ip}</code></td>
-                <td>${a.total_errors}</td>
-                <td>${a.client_errors}</td>
-                <td>${a.server_errors}</td>
-                <td>${a.total_requests}</td>
-                <td>${(a.error_rate*100).toFixed(1)}%</td>
-            </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:#484f58;">No anomalies detected</td></tr>';
+        let rows = '';
+        data.entries.forEach((e, i) => {
+            const ts = e.timestamp ? e.timestamp.replace('T', ' ').substring(0, 19) : '-';
+            const rt = typeof e.request_time === 'number' ? e.request_time.toFixed(3) : '0.000';
+            const kb = e.body_bytes_sent > 1024 ? (e.body_bytes_sent/1024).toFixed(1)+'K' : e.body_bytes_sent;
+            rows += '<tr>' +
+                '<td style="color:#484f58;">' + (i+1) + '</td>' +
+                '<td class="ip">' + esc(e.remote_addr) + '</td>' +
+                '<td style="color:#8b949e;">' + esc(ts) + '</td>' +
+                '<td class="' + methodClass(e.method) + '">' + esc(e.method) + '</td>' +
+                '<td><span class="path" title="' + esc(e.path) + '">' + esc(e.path) + '</span></td>' +
+                '<td class="' + statusClass(e.status) + '">' + e.status + '</td>' +
+                '<td style="color:#8b949e;">' + esc(String(kb)) + '</td>' +
+                '<td class="' + timeClass(e.request_time || 0) + '">' + esc(rt) + 's</td>' +
+                '</tr>';
+        });
+        document.getElementById('entriesBody').innerHTML = rows || '<tr><td colspan="8" style="text-align:center;color:#484f58;padding:20px;">No entries</td></tr>';
 
-        document.getElementById('performanceBody').innerHTML = data.performance.map(p => `
-            <tr>
-                <td><code>${p.endpoint}</code></td>
-                <td>${p.request_count}</td>
-                <td>${p.avg_response_time.toFixed(4)}s</td>
-                <td>${p.min_response_time.toFixed(4)}s</td>
-                <td>${p.max_response_time.toFixed(4)}s</td>
-            </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:#484f58;">No performance data</td></tr>';
+        document.getElementById('anomaliesBody').innerHTML = data.anomalies.map(a =>
+            '<tr class="row-danger">' +
+            '<td class="ip">' + esc(a.ip) + '</td>' +
+            '<td>' + a.total_errors + '</td>' +
+            '<td>' + a.client_errors + '</td>' +
+            '<td>' + a.server_errors + '</td>' +
+            '<td>' + a.total_requests + '</td>' +
+            '<td style="color:#f85149;font-weight:600;">' + (a.error_rate*100).toFixed(1) + '%</td>' +
+            '</tr>'
+        ).join('') || '<tr><td colspan="6" style="text-align:center;color:#484f58;padding:20px;">No anomalies detected</td></tr>';
 
-        document.getElementById('securityBody').innerHTML = data.security.map(s => `
-            <tr class="alert-row">
-                <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><code>${s.path}</code></td>
-                <td>${s.method}</td>
-                <td><code>${s.ip}</code></td>
-                <td>${s.pattern_type}</td>
-                <td><code>${s.matched_content}</code></td>
-            </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:#484f58;">No security issues</td></tr>';
+        document.getElementById('performanceBody').innerHTML = data.performance.map(p =>
+            '<tr>' +
+            '<td>' + esc(p.endpoint) + '</td>' +
+            '<td>' + p.request_count + '</td>' +
+            '<td>' + p.avg_response_time.toFixed(4) + 's</td>' +
+            '<td style="color:#7ee787;">' + p.min_response_time.toFixed(4) + 's</td>' +
+            '<td style="color:#f85149;">' + p.max_response_time.toFixed(4) + 's</td>' +
+            '</tr>'
+        ).join('') || '<tr><td colspan="5" style="text-align:center;color:#484f58;padding:20px;">No performance data</td></tr>';
+
+        document.getElementById('securityBody').innerHTML = data.security.map(s =>
+            '<tr class="row-danger">' +
+            '<td><span class="path" title="' + esc(s.path) + '">' + esc(s.path) + '</span></td>' +
+            '<td>' + esc(s.method) + '</td>' +
+            '<td class="ip">' + esc(s.ip) + '</td>' +
+            '<td style="color:#d29922;font-weight:600;">' + esc(s.pattern_type) + '</td>' +
+            '<td style="color:#f85149;">' + esc(s.matched_content) + '</td>' +
+            '</tr>'
+        ).join('') || '<tr><td colspan="5" style="text-align:center;color:#484f58;padding:20px;">No security issues detected</td></tr>';
 
         document.querySelector('.tab[data-tab="log-entries"]').click();
     }
 
     function clearAll() {
         document.getElementById('logText').value = '';
-        fileInput.value = '';
-        fileName.textContent = '';
+        fileInput.value = ''; fileName.textContent = '';
         document.getElementById('results').style.display = 'none';
         document.getElementById('errorBox').innerHTML = '';
     }
@@ -248,43 +265,27 @@
     async function loadScenario(name, btn) {
         document.querySelectorAll('#scenarioButtons .scenario-btn').forEach(b => b.classList.remove('active-scenario'));
         btn.classList.add('active-scenario');
-        fileInput.value = '';
-        fileName.textContent = '';
-
+        fileInput.value = ''; fileName.textContent = '';
         try {
-            btn.textContent = 'Loading...';
-            btn.disabled = true;
-            const res = await fetch(`/samples/${name}`);
+            btn.textContent = 'Loading...'; btn.disabled = true;
+            const res = await fetch('/samples/' + name);
             const data = await res.json();
             document.getElementById('logText').value = data.log_text;
         } catch (e) {
             showError('Failed to load scenario: ' + e.message);
-        } finally {
-            loadScenarioButtons();
-        }
+        } finally { loadScenarioButtons(); }
     }
 
     async function loadScenarioButtons() {
         try {
             const res = await fetch('/samples');
             const samples = await res.json();
-            const container = document.getElementById('scenarioButtons');
-            container.innerHTML = samples.map(s => {
-                const colors = {
-                    normal: '#3fb950', anomaly: '#f85149', sqli: '#d29922',
-                    xss: '#f0883e', traversal: '#bc8cff', performance: '#58a6ff',
-                    'full-attack': '#f85149'
-                };
-                const emojis = {
-                    normal: '&#x2705;', anomaly: '&#x1f6a8;', sqli: '&#x1f489;',
-                    xss: '&#x1f480;', traversal: '&#x1f9ed;', performance: '&#x23f1;',
-                    'full-attack': '&#x1f4a3;'
-                };
-                return `<button class="scenario-btn" style="background:#161b22;border:1px solid ${colors[s.key] || '#30363d'};color:#c9d1d9;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:0.8rem;transition:all .15s;" onclick="loadScenario('${s.key}', this)" onmouseover="this.style.borderColor='${colors[s.key] || '#58a6ff'}';this.style.background='rgba(${parseInt(colors[s.key]?.slice(1,3)||'58',16)},${parseInt(colors[s.key]?.slice(3,5)||'a6',16)},${parseInt(colors[s.key]?.slice(5,7)||'ff',16)},.1)'" onmouseout="this.style.borderColor='${colors[s.key] || '#30363d'}';this.style.background='#161b22'">${emojis[s.key] || ''} ${s.label}</button>`;
-            }).join('');
-        } catch (e) {
-            document.getElementById('scenarioButtons').innerHTML = '<span style="color:#f85149;">Failed to load scenarios</span>';
-        }
+            const colors = { normal:'#3fb950',anomaly:'#f85149',sqli:'#d29922',xss:'#f0883e',traversal:'#bc8cff',performance:'#58a6ff','full-attack':'#f85149' };
+            const icons = { normal:'N',anomaly:'!',sqli:'S',xss:'X',traversal:'T',performance:'P','full-attack':'*' };
+            document.getElementById('scenarioButtons').innerHTML = samples.map(s =>
+                '<button class="scenario-btn" style="background:#161b22;border:1px solid ' + (colors[s.key]||'#30363d') + ';color:#c9d1d9;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:0.78rem;transition:all .15s;font-weight:500;" onclick="loadScenario(\'' + s.key + '\',this)">' + esc(icons[s.key] || '') + ' ' + esc(s.label) + '</button>'
+            ).join('');
+        } catch (e) { document.getElementById('scenarioButtons').innerHTML = '<span style="color:#f85149;">Failed</span>'; }
     }
 
     loadScenarioButtons();
