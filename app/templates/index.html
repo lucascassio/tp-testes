@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LogAnalyzer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #c9d1d9; min-height: 100vh; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; padding: 30px 0 20px; border-bottom: 1px solid #21262d; margin-bottom: 24px; }
+        header h1 { font-size: 2rem; color: #58a6ff; }
+        header p { color: #8b949e; margin-top: 6px; }
+
+        .upload-area { border: 2px dashed #30363d; border-radius: 12px; padding: 32px; text-align: center; transition: all .2s; margin-bottom: 16px; }
+        .upload-area.dragover { border-color: #58a6ff; background: rgba(88,166,255,.08); }
+        .upload-area input[type=file] { display: none; }
+        .upload-area label { cursor: pointer; color: #58a6ff; font-weight: 600; }
+
+        textarea { width: 100%; height: 140px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; color: #c9d1d9; padding: 12px; font-family: monospace; font-size: 0.85rem; resize: vertical; margin-bottom: 12px; }
+        .btn { background: #238636; color: #fff; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem; transition: background .15s; }
+        .btn:hover { background: #2ea043; }
+        .btn:disabled { background: #21262d; color: #484f58; cursor: not-allowed; }
+        .btn-outline { background: transparent; border: 1px solid #30363d; color: #c9d1d9; margin-right: 8px; }
+        .btn-outline:hover { background: #21262d; }
+
+        .actions { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+
+        .tabs { display: flex; gap: 0; border-bottom: 1px solid #21262d; margin-bottom: 16px; }
+        .tab { padding: 10px 20px; cursor: pointer; border-bottom: 2px solid transparent; color: #8b949e; font-weight: 500; transition: all .15s; }
+        .tab.active { color: #58a6ff; border-bottom-color: #58a6ff; }
+        .tab:hover { color: #c9d1d9; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #21262d; }
+        th { background: #161b22; color: #8b949e; font-weight: 600; position: sticky; top: 0; }
+        tr:hover { background: rgba(88,166,255,.05); }
+        td:first-child, th:first-child { padding-left: 4px; }
+
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600; }
+        .badge-4xx { background: rgba(210,153,34,.2); color: #d29922; }
+        .badge-5xx { background: rgba(248,81,73,.2); color: #f85149; }
+        .badge-ok { background: rgba(35,134,54,.2); color: #3fb950; }
+
+        .stat-box { background: #161b22; border: 1px solid #21262d; border-radius: 8px; padding: 16px; }
+        .stat-box h3 { font-size: 0.8rem; text-transform: uppercase; color: #8b949e; margin-bottom: 4px; }
+        .stat-box .number { font-size: 1.8rem; font-weight: 700; color: #58a6ff; }
+
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+
+        .alert-row { background: rgba(248,81,73,.08); }
+
+        .loading { text-align: center; padding: 40px; color: #8b949e; }
+        .error-msg { background: rgba(248,81,73,.15); border: 1px solid rgba(248,81,73,.3); color: #f85149; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #484f58; }
+        .empty-state svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.3; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>LogAnalyzer</h1>
+        <p>Upload server logs to detect anomalies, measure performance, and audit security</p>
+    </header>
+
+    <div class="upload-area" id="dropZone">
+        <p>Drag & drop a log file here or <label for="fileInput">browse</label></p>
+        <input type="file" id="fileInput" accept=".log,.txt,.csv">
+        <p id="fileName" style="margin-top:8px;color:#58a6ff;"></p>
+    </div>
+
+    <textarea id="logText" placeholder="Or paste your log content here...&#10;&#10;Example: 192.168.1.1 - - [10/Oct/2023:13:55:36 -0300] &quot;GET /api/users HTTP/1.1&quot; 200 1234 &quot;-&quot; &quot;Mozilla/5.0&quot; 0.045"></textarea>
+
+    <div class="actions">
+        <button class="btn" id="analyzeBtn" onclick="runAnalysis()">Analyze Logs</button>
+        <button class="btn btn-outline" id="clearBtn" onclick="clearAll()">Clear</button>
+        <button class="btn btn-outline" id="sampleBtn" onclick="loadSample()">Load Sample</button>
+    </div>
+
+    <div id="errorBox"></div>
+
+    <div id="results" style="display:none;">
+        <div class="stats-row" id="statsRow"></div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="log-entries">Log Entries</div>
+            <div class="tab" data-tab="anomalies">Anomalies</div>
+            <div class="tab" data-tab="performance">Performance</div>
+            <div class="tab" data-tab="security">Security</div>
+        </div>
+
+        <div class="tab-content active" id="log-entries">
+            <div style="overflow-x:auto;max-height:500px;overflow-y:auto;">
+                <table>
+                    <thead><tr><th>IP</th><th>Timestamp</th><th>Method</th><th>Path</th><th>Status</th><th>Size</th><th>Time (s)</th></tr></thead>
+                    <tbody id="entriesBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="tab-content" id="anomalies">
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead><tr><th>IP</th><th>Total Errors</th><th>4xx</th><th>5xx</th><th>Total Requests</th><th>Error Rate</th></tr></thead>
+                    <tbody id="anomaliesBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="tab-content" id="performance">
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead><tr><th>Endpoint</th><th>Requests</th><th>Avg Time (s)</th><th>Min (s)</th><th>Max (s)</th></tr></thead>
+                    <tbody id="performanceBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="tab-content" id="security">
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead><tr><th>Path</th><th>Method</th><th>IP</th><th>Pattern</th><th>Matched</th></tr></thead>
+                    <tbody id="securityBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileName = document.getElementById('fileName');
+
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) fileInput.files = e.dataTransfer.files;
+        updateFileName();
+    });
+    fileInput.addEventListener('change', updateFileName);
+    function updateFileName() { fileName.textContent = fileInput.files[0]?.name || ''; }
+
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.tab).classList.add('active');
+        });
+    });
+
+    async function runAnalysis() {
+        const btn = document.getElementById('analyzeBtn');
+        btn.disabled = true;
+        btn.textContent = 'Analyzing...';
+        document.getElementById('errorBox').innerHTML = '';
+
+        const formData = new FormData();
+        if (fileInput.files[0]) formData.append('file', fileInput.files[0]);
+        const text = document.getElementById('logText').value.trim();
+        if (text) formData.append('log_text', text);
+
+        try {
+            const res = await fetch('/analyze', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.error) { showError(data.error); return; }
+            renderResults(data);
+        } catch (e) { showError('Failed to connect to server: ' + e.message); }
+        finally { btn.disabled = false; btn.textContent = 'Analyze Logs'; }
+    }
+
+    function showError(msg) {
+        document.getElementById('errorBox').innerHTML = `<div class="error-msg">${msg}</div>`;
+        document.getElementById('results').style.display = 'none';
+    }
+
+    function renderResults(data) {
+        document.getElementById('results').style.display = 'block';
+
+        document.getElementById('statsRow').innerHTML = `
+            <div class="stat-box"><h3>Total Entries</h3><div class="number">${data.total_entries}</div></div>
+            <div class="stat-box"><h3>Anomalies</h3><div class="number">${data.anomalies.length}</div></div>
+            <div class="stat-box"><h3>Endpoints</h3><div class="number">${data.performance.length}</div></div>
+            <div class="stat-box"><h3>Security Alerts</h3><div class="number">${data.security.length}</div></div>
+        `;
+
+        const statusBadge = s => s >= 500 ? 'badge-5xx' : s >= 400 ? 'badge-4xx' : 'badge-ok';
+        document.getElementById('entriesBody').innerHTML = data.entries.map(e => `
+            <tr>
+                <td><code>${e.remote_addr}</code></td>
+                <td>${e.timestamp || '-'}</td>
+                <td>${e.method}</td>
+                <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.path}</td>
+                <td><span class="badge ${statusBadge(e.status)}">${e.status}</span></td>
+                <td>${e.body_bytes_sent}</td>
+                <td>${e.request_time.toFixed(4)}</td>
+            </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;color:#484f58;">No entries</td></tr>';
+
+        document.getElementById('anomaliesBody').innerHTML = data.anomalies.map(a => `
+            <tr class="alert-row">
+                <td><code>${a.ip}</code></td>
+                <td>${a.total_errors}</td>
+                <td>${a.client_errors}</td>
+                <td>${a.server_errors}</td>
+                <td>${a.total_requests}</td>
+                <td>${(a.error_rate*100).toFixed(1)}%</td>
+            </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:#484f58;">No anomalies detected</td></tr>';
+
+        document.getElementById('performanceBody').innerHTML = data.performance.map(p => `
+            <tr>
+                <td><code>${p.endpoint}</code></td>
+                <td>${p.request_count}</td>
+                <td>${p.avg_response_time.toFixed(4)}s</td>
+                <td>${p.min_response_time.toFixed(4)}s</td>
+                <td>${p.max_response_time.toFixed(4)}s</td>
+            </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:#484f58;">No performance data</td></tr>';
+
+        document.getElementById('securityBody').innerHTML = data.security.map(s => `
+            <tr class="alert-row">
+                <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><code>${s.path}</code></td>
+                <td>${s.method}</td>
+                <td><code>${s.ip}</code></td>
+                <td>${s.pattern_type}</td>
+                <td><code>${s.matched_content}</code></td>
+            </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:#484f58;">No security issues</td></tr>';
+
+        document.querySelector('.tab[data-tab="log-entries"]').click();
+    }
+
+    function clearAll() {
+        document.getElementById('logText').value = '';
+        fileInput.value = '';
+        fileName.textContent = '';
+        document.getElementById('results').style.display = 'none';
+        document.getElementById('errorBox').innerHTML = '';
+    }
+
+    function loadSample() {
+        const sample = `192.168.1.1 - - [10/Oct/2023:13:55:36 -0300] "GET /api/users HTTP/1.1" 200 1234 "-" "Mozilla/5.0" 0.045
+192.168.1.2 - - [10/Oct/2023:13:55:37 -0300] "POST /login HTTP/1.1" 401 50 "-" "curl/7.68" 0.120
+192.168.1.2 - - [10/Oct/2023:13:55:38 -0300] "POST /login HTTP/1.1" 401 50 "-" "curl/7.68" 0.115
+192.168.1.2 - - [10/Oct/2023:13:55:39 -0300] "POST /login HTTP/1.1" 401 50 "-" "curl/7.68" 0.130
+192.168.1.2 - - [10/Oct/2023:13:55:40 -0300] "POST /login HTTP/1.1" 500 50 "-" "curl/7.68" 1.500
+192.168.1.3 - - [10/Oct/2023:13:55:41 -0300] "GET /search?q=test HTTP/1.1" 200 567 "https://google.com" "Mozilla/5.0" 0.032
+192.168.1.4 - - [10/Oct/2023:13:55:42 -0300] "GET /products HTTP/1.1" 200 890 "-" "Mozilla/5.0" 0.089
+192.168.1.5 - - [10/Oct/2023:13:55:43 -0300] "GET /api/users?id=1 OR 1=1-- HTTP/1.1" 200 432 "-" "sqlmap/1.0" 0.056
+192.168.1.6 - - [10/Oct/2023:13:55:44 -0300] "GET /profile?user=<script>alert(1)</script> HTTP/1.1" 400 0 "-" "Mozilla/5.0" 0.012
+192.168.1.7 - - [10/Oct/2023:13:55:45 -0300] "GET /../../etc/passwd HTTP/1.1" 403 50 "-" "curl/7.68" 0.008
+192.168.1.1 - - [10/Oct/2023:13:55:46 -0300] "GET /api/products HTTP/1.1" 200 2345 "-" "Mozilla/5.0" 0.110
+192.168.1.2 - - [10/Oct/2023:13:55:47 -0300] "POST /login HTTP/1.1" 401 50 "-" "curl/7.68" 0.125
+192.168.1.8 - - [10/Oct/2023:13:55:48 -0300] "GET /admin/dashboard HTTP/1.1" 403 45 "-" "Mozilla/5.0" 0.015
+192.168.1.9 - - [10/Oct/2023:13:55:49 -0300] "DELETE /api/users/42 HTTP/1.1" 204 0 "-" "Mozilla/5.0" 0.067
+192.168.1.10 - - [10/Oct/2023:13:55:50 -0300] "GET /api/status HTTP/1.1" 503 100 "-" "Mozilla/5.0" 5.000`;
+        document.getElementById('logText').value = sample;
+        fileName.textContent = '';
+        fileInput.value = '';
+    }
+</script>
+</body>
+</html>
