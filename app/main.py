@@ -28,6 +28,11 @@ async def home():
     return HTMLResponse(_TEMPLATE_PATH.read_text(encoding="utf-8"))
 
 
+@app.get("/health")
+async def health():
+    return {"status": "ok", "version": "1.0.0"}
+
+
 @app.post("/analyze")
 async def analyze(file: UploadFile = File(None), log_text: Optional[str] = Form(None)):
     content = ""
