@@ -21,6 +21,13 @@ class TestHomeEndpoint:
         assert "text/html" in response.headers["content-type"]
         assert "LogAnalyzer" in response.text
 
+    def test_health_endpoint_returns_ok(self):
+        response = client.get("/health")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "ok"
+        assert data["version"] == "1.0.0"
+
 
 class TestAnalyzeEndpoint:
     def test_analyze_with_text_form_field(self):
