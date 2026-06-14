@@ -14,6 +14,7 @@ from app.reporters import (
     generate_security_csv,
     generate_full_report,
 )
+from app.samples import SAMPLES
 
 app = FastAPI(title="LogAnalyzer", version="1.0.0")
 
@@ -31,6 +32,22 @@ async def home():
 @app.get("/health")
 async def health():
     return {"status": "ok", "version": "1.0.0"}
+
+
+@app.get("/samples")
+async def list_samples():
+    return [
+        {"key": k, "label": v[0]}
+        for k, v in SAMPLES.items()
+    ]
+
+
+@app.get("/samples/{name}")
+async def get_sample(name: str):
+    if name not in SAMPLES:
+        return {"error": f"Sample '{name}' not found. Available: {list(SAMPLES.keys())}"}
+    log_text = SAMPLES[name][1]()
+    return {"label": SAMPLES[name][0], "log_text": log_text}
 
 
 @app.post("/analyze")
