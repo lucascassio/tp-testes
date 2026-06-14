@@ -15,6 +15,7 @@ class LogEntry:
     body_bytes_sent: int
     http_referer: str
     http_user_agent: str
+    request_time: float = 0.0
     raw_line: str = field(repr=False)
 
     @property

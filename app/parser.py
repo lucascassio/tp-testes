@@ -5,15 +5,16 @@ from typing import Optional
 from app.models import LogEntry
 
 LOG_PATTERN = re.compile(
-    r'^(\S+) '          
-    r'(\S+) '           
-    r'(\S+) '           
-    r'\[(.*?)\] '       
-    r'"([^"]*)" '       
-    r'(\d+) '           
-    r'(\d+) '           
-    r'"([^"]*)" '       
-    r'"([^"]*)"'        
+    r'^(\S+) '
+    r'(\S+) '
+    r'(\S+) '
+    r'\[(.*?)\] '
+    r'"([^"]*)" '
+    r'(\d+) '
+    r'(\d+) '
+    r'"([^"]*)" '
+    r'"([^"]*)"'
+    r'(?: (\S+))?$'
 )
 
 TIMESTAMP_FORMATS = [
@@ -43,6 +44,15 @@ def parse_request(raw: str) -> tuple[str, str, str]:
     return method, path, protocol
 
 
+def _parse_request_time(raw: Optional[str]) -> float:
+    if raw is None:
+        return 0.0
+    try:
+        return float(raw)
+    except ValueError:
+        return 0.0
+
+
 def parse_line(line: str) -> Optional[LogEntry]:
     if not line or not line.strip():
         return None
@@ -59,6 +69,7 @@ def parse_line(line: str) -> Optional[LogEntry]:
     body_bytes_str = match.group(7)
     http_referer = match.group(8)
     http_user_agent = match.group(9)
+    request_time_raw = match.group(10)
 
     timestamp = parse_timestamp(timestamp_raw)
 
@@ -69,6 +80,7 @@ def parse_line(line: str) -> Optional[LogEntry]:
         return None
 
     method, path, protocol = parse_request(request_raw)
+    request_time = _parse_request_time(request_time_raw)
 
     return LogEntry(
         remote_addr=remote_addr,
@@ -81,6 +93,7 @@ def parse_line(line: str) -> Optional[LogEntry]:
         body_bytes_sent=body_bytes_sent,
         http_referer=http_referer,
         http_user_agent=http_user_agent,
+        request_time=request_time,
         raw_line=line.rstrip("\n"),
     )
 
