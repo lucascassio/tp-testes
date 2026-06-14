@@ -37,10 +37,19 @@ def parse_timestamp(raw: str) -> Optional[datetime]:
 def parse_request(raw: str) -> tuple[str, str, str]:
     if not raw:
         return "", "", ""
-    parts = raw.split(" ", 2)
-    method = parts[0] if len(parts) > 0 else ""
-    path = parts[1] if len(parts) > 1 else ""
-    protocol = parts[2] if len(parts) > 2 else ""
+    parts = raw.split(" ")
+    if len(parts) == 0:
+        return "", "", ""
+    method = parts[0]
+    protocol = ""
+    path = ""
+    if len(parts) >= 2:
+        last = parts[-1]
+        if last.upper().startswith("HTTP"):
+            protocol = last
+            path = " ".join(parts[1:-1])
+        else:
+            path = " ".join(parts[1:])
     return method, path, protocol
 
 
@@ -62,7 +71,7 @@ def parse_line(line: str) -> Optional[LogEntry]:
         return None
 
     remote_addr = match.group(1)
-    remote_user = match.group(2)
+    remote_user = match.group(3)
     timestamp_raw = match.group(4)
     request_raw = match.group(5)
     status_str = match.group(6)

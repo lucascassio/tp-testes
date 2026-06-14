@@ -1,11 +1,10 @@
 import io
 import os
+from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, File, UploadFile, Form, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 
 from app.parser import parse_text
 from app.analyzers import AnomalyDetector, PerformanceAnalyzer, SecurityAuditor
@@ -18,15 +17,15 @@ from app.reporters import (
 
 app = FastAPI(title="LogAnalyzer", version="1.0.0")
 
-templates = Jinja2Templates(directory="app/templates")
-
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+_TEMPLATE_PATH = Path(__file__).parent / "templates" / "index.html"
+
 
 @app.get("/", response_class=HTMLResponse)
-async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+async def home():
+    return HTMLResponse(_TEMPLATE_PATH.read_text(encoding="utf-8"))
 
 
 @app.post("/analyze")
