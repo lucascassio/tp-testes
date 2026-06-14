@@ -8,6 +8,7 @@ uploads/
 htmlcov/
 .coverage
 coverage.xml
+junit.xml
 *.egg-info/
 dist/
 build/

@@ -137,8 +137,8 @@ A suíte atual conta com **78 testes** (70 unitários + 8 integração) e **99% 
 ## 7. CI/CD e Cobertura
 Os testes são executados automaticamente a cada commit via **GitHub Actions** nos sistemas operacionais **Linux**, **macOS** e **Windows**. O relatório de cobertura é enviado para o **Codecov**.
 
-[![Tests](https://github.com/lucascassio/log-analyzer/actions/workflows/tests.yml/badge.svg)](https://github.com/lucascassio/log-analyzer/actions/workflows/tests.yml)
-[![codecov](https://codecov.io/github/lucascassio/log-analyzer/branch/main/graph/badge.svg)](https://codecov.io/github/lucascassio/log-analyzer)
+[![Tests](https://github.com/lucascassio/tp-testes/actions/workflows/tests.yml/badge.svg)](https://github.com/lucascassio/tp-testes/actions/workflows/tests.yml)
+[![codecov](https://codecov.io/github/lucascassio/tp-testes/branch/main/graph/badge.svg)](https://codecov.io/github/lucascassio/tp-testes)
 
 ## 8. Métricas de Teste
 - **78 testes** no total (70 unitários + 8 integração)
