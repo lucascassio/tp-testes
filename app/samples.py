@@ -1,3 +1,10 @@
+"""Pre-generated log scenarios for testing and demonstration.
+
+Each generator function produces a realistic multi-line log text
+illustrating a specific scenario: normal traffic, anomalies, SQL injection,
+XSS, path traversal, slow endpoints, and a full combined attack.
+"""
+
 from datetime import datetime, timedelta
 import random
 
