@@ -1,6 +1,8 @@
 import pytest
 
 from app.parser import parse_line, parse_text, parse_timestamp, parse_request
+
+pytestmark = pytest.mark.unit
 from app.models import LogEntry
 
 

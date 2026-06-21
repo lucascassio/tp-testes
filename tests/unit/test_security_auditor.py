@@ -1,6 +1,8 @@
 import pytest
 from app.analyzers import SecurityAuditor
 
+pytestmark = pytest.mark.unit
+
 
 SQLI_PATHS = [
     ("/products?id=1 UNION SELECT * FROM users", "192.168.1.1"),

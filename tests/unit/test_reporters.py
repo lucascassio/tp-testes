@@ -1,7 +1,8 @@
 import pytest
 
-from app.models import LogEntry
 from app.analyzers import AnomalyResult, PerformanceResult, SecurityAlert
+
+pytestmark = pytest.mark.unit
 from app.reporters import (
     generate_anomalies_csv,
     generate_performance_csv,

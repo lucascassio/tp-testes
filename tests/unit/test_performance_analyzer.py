@@ -1,6 +1,8 @@
 import pytest
 from app.analyzers import PerformanceAnalyzer
 
+pytestmark = pytest.mark.unit
+
 
 class TestPerformanceAnalyzer:
     def test_average_response_time_single_endpoint(self, make_entry):

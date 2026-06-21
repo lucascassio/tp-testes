@@ -13,6 +13,8 @@ from app.samples import (
 from app.parser import parse_text
 from app.analyzers import AnomalyDetector, PerformanceAnalyzer, SecurityAuditor
 
+pytestmark = pytest.mark.integration
+
 
 GENERATORS = [
     ("normal", generate_normal_traffic, "Normal Traffic Baseline"),

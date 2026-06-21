@@ -1,6 +1,8 @@
 import pytest
 from app.analyzers import AnomalyDetector
 
+pytestmark = pytest.mark.unit
+
 
 class TestAnomalyDetector:
     @pytest.mark.parametrize("status,error_attr", [
