@@ -1,3 +1,5 @@
+"""Domain model for parsed log entries."""
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional
@@ -5,6 +7,7 @@ from typing import Optional
 
 @dataclass
 class LogEntry:
+    """A single parsed log line with all fields and computed properties."""
     remote_addr: str
     remote_user: str
     timestamp: Optional[datetime]
