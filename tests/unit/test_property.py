@@ -2,7 +2,7 @@
 from datetime import datetime
 
 import pytest
-from hypothesis import given, strategies as st, settings, HealthCheck
+from hypothesis import given, strategies as st, settings, HealthCheck, assume
 
 from app.models import LogEntry
 from app.parser import parse_line, parse_text
@@ -82,8 +82,7 @@ class TestSecurityAuditorProperties:
     @given(safe_path)
     @settings(max_examples=300, suppress_health_check=[HealthCheck.function_scoped_fixture])
     def test_clean_paths_never_trigger_alerts(self, path):
-        if not path.strip() or not path.startswith("/"):
-            return
+        assume(path.strip() and path.startswith("/"))
         entry = self._make_entry(path=path)
         auditor = SecurityAuditor()
         alerts = auditor.audit([entry])
@@ -120,8 +119,7 @@ class TestSecurityAuditorProperties:
     @given(safe_path, http_method, ipv4)
     @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
     def test_auditor_never_crashes_on_any_path(self, path, method, ip):
-        if not path:
-            return
+        assume(path)
         entry = self._make_entry(ip=ip, method=method, path=path)
         auditor = SecurityAuditor()
         result = auditor.audit([entry])

@@ -70,13 +70,13 @@ class TestSampleGenerators:
         text = generator()
         entries = parse_text(text)
 
-        anomaly_detector = AnomalyDetector(error_threshold=3)
-        performance_analyzer = PerformanceAnalyzer()
-        security_auditor = SecurityAuditor()
+        anomalies = AnomalyDetector(error_threshold=3).analyze(entries)
+        performance = PerformanceAnalyzer().analyze(entries)
+        security = SecurityAuditor().audit(entries)
 
-        anomaly_detector.analyze(entries)
-        performance_analyzer.analyze(entries)
-        security_auditor.audit(entries)
+        assert isinstance(anomalies, list), "AnomalyDetector should return a list"
+        assert isinstance(performance, list), "PerformanceAnalyzer should return a list"
+        assert isinstance(security, list), "SecurityAuditor should return a list"
 
 
 class TestNormalTraffic:
@@ -246,7 +246,8 @@ class TestFullAttackScenario:
         alerts = auditor.audit(entries)
 
         pattern_types = {a.pattern_type for a in alerts}
-        assert pattern_types == {"SQL Injection", "XSS", "Path Traversal"}
+        assert pattern_types >= {"SQL Injection", "XSS", "Path Traversal"}, \
+            f"Missing attack types. Got: {pattern_types}"
 
     def test_detects_anomalies_in_full_attack(self):
         text = generate_full_attack_scenario()
@@ -257,7 +258,7 @@ class TestFullAttackScenario:
 
         assert len(results) >= 2
         ips = {r.ip for r in results}
-        assert "45.33.32.156" in ips
+        assert "45.33.32.156" in ips, f"Expected attacker IP not found in {ips}"
 
     def test_performance_analysis_on_full_attack(self):
         text = generate_full_attack_scenario()

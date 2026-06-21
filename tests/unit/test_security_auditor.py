@@ -1,5 +1,4 @@
 import pytest
-from app.analyzers import SecurityAuditor
 
 pytestmark = pytest.mark.unit
 
@@ -29,57 +28,51 @@ CLEAN_PATHS = [
 
 class TestSecurityAuditor:
     @pytest.mark.parametrize("path,ip", SQLI_PATHS)
-    def test_detect_sql_injection(self, make_entry, path, ip):
+    def test_detect_sql_injection(self, make_entry, security_auditor, path, ip):
         entry = make_entry(path=path, ip=ip)
-        auditor = SecurityAuditor()
-        alerts = auditor.audit([entry])
+        alerts = security_auditor.audit([entry])
 
-        assert len(alerts) == 1
-        assert alerts[0].pattern_type == "SQL Injection"
+        assert len(alerts) == 1, f"Expected 1 alert, got {len(alerts)}"
+        assert alerts[0].pattern_type == "SQL Injection", f"Expected SQL Injection, got {alerts[0].pattern_type}"
         assert alerts[0].ip == ip
 
     @pytest.mark.parametrize("path", XSS_PATHS)
-    def test_detect_xss(self, make_entry, path):
+    def test_detect_xss(self, make_entry, security_auditor, path):
         entry = make_entry(path=path)
-        auditor = SecurityAuditor()
-        alerts = auditor.audit([entry])
+        alerts = security_auditor.audit([entry])
 
-        assert len(alerts) == 1
+        assert len(alerts) == 1, f"Expected 1 XSS alert, got {len(alerts)}"
         assert alerts[0].pattern_type == "XSS"
 
     @pytest.mark.parametrize("path", TRAVERSAL_PATHS)
-    def test_detect_path_traversal(self, make_entry, path):
+    def test_detect_path_traversal(self, make_entry, security_auditor, path):
         entry = make_entry(path=path)
-        auditor = SecurityAuditor()
-        alerts = auditor.audit([entry])
+        alerts = security_auditor.audit([entry])
 
-        assert len(alerts) == 1
+        assert len(alerts) == 1, f"Expected 1 traversal alert, got {len(alerts)}"
         assert alerts[0].pattern_type == "Path Traversal"
 
     @pytest.mark.parametrize("path", CLEAN_PATHS)
-    def test_no_alert_on_clean_url(self, make_entry, path):
+    def test_no_alert_on_clean_url(self, make_entry, security_auditor, path):
         entry = make_entry(path=path)
-        auditor = SecurityAuditor()
-        alerts = auditor.audit([entry])
+        alerts = security_auditor.audit([entry])
 
-        assert alerts == []
+        assert alerts == [], f"Unexpected alerts on clean path {path}: {alerts}"
 
-    def test_multiple_security_issues_in_one_log(self, make_entry):
+    def test_multiple_security_issues_in_one_log(self, make_entry, security_auditor):
         entry = make_entry(path="/search?q=1 UNION SELECT * FROM users<script>alert(1)</script>")
-        auditor = SecurityAuditor()
-        alerts = auditor.audit([entry])
+        alerts = security_auditor.audit([entry])
 
-        assert len(alerts) == 2
-        assert {a.pattern_type for a in alerts} == {"SQL Injection", "XSS"}
+        assert len(alerts) == 2, f"Expected 2 alerts, got {len(alerts)}"
+        pattern_types = {a.pattern_type for a in alerts}
+        assert pattern_types >= {"SQL Injection", "XSS"}, f"Missing expected pattern types: {pattern_types}"
 
-    def test_empty_entries_returns_empty_list(self):
-        auditor = SecurityAuditor()
-        assert auditor.audit([]) == []
+    def test_empty_entries_returns_empty_list(self, security_auditor):
+        assert security_auditor.audit([]) == []
 
-    def test_alert_includes_matched_content(self, make_entry):
+    def test_alert_includes_matched_content(self, make_entry, security_auditor):
         entry = make_entry(path="/api?id=1 OR 1=1")
-        auditor = SecurityAuditor()
-        alerts = auditor.audit([entry])
+        alerts = security_auditor.audit([entry])
 
-        assert len(alerts) == 1
-        assert alerts[0].matched_content == "OR 1=1"
+        assert len(alerts) == 1, f"Expected 1 alert, got {len(alerts)}"
+        assert alerts[0].matched_content == "OR 1=1", f"Expected 'OR 1=1', got {alerts[0].matched_content!r}"

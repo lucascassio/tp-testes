@@ -14,7 +14,8 @@ class TestHomeEndpoint:
         response = client.get("/health")
         assert response.status_code == 200
         data = response.json()
-        assert data == {"status": "ok", "version": "1.0.0"}
+        assert data["status"] == "ok"
+        assert data["version"] == "1.0.0"
 
 
 class TestAnalyzeEndpoint:
@@ -37,7 +38,7 @@ class TestAnalyzeEndpoint:
         data = response.json()
         anomalies = [a for a in data["anomalies"] if a["ip"] == "192.168.1.2"]
         assert len(anomalies) == 1
-        assert anomalies[0]["total_errors"] >= 4
+        assert anomalies[0]["total_errors"] == 4
 
     @pytest.mark.parametrize("log_line,pattern_type", [
         (

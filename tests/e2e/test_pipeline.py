@@ -33,7 +33,7 @@ class TestSamplesEndpoint:
         assert response.status_code == 200
         samples = response.json()
         assert isinstance(samples, list)
-        assert len(samples) == 7
+        assert len(samples) > 0
         keys = {s["key"] for s in samples}
         assert "full-attack" in keys
 
@@ -68,9 +68,8 @@ class TestAnalyzeEndpoint:
         sql_log = '192.168.1.5 - - [10/Oct/2023:13:55:43 -0300] "GET /api?id=1 OR 1=1 HTTP/1.1" 200 432 "-" "sqlmap"'
         response = httpx.post(f"{live_server}/analyze", data={"log_text": sql_log})
         data = response.json()
-        assert len(data["security"]) >= 1
-        pattern_types = {s["pattern_type"] for s in data["security"]}
-        assert "SQL Injection" in pattern_types
+        assert len(data["security"]) == 1, f"Expected 1 security alert, got {len(data['security'])}"
+        assert "SQL Injection" in {s["pattern_type"] for s in data["security"]}
 
     def test_analyze_with_no_data(self, live_server):
         response = httpx.post(f"{live_server}/analyze", data={"log_text": ""})

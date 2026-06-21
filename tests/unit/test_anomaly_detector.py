@@ -26,7 +26,7 @@ class TestAnomalyDetector:
         detector = AnomalyDetector(error_threshold=5)
         results = detector.analyze(entries)
 
-        assert results == []
+        assert results == [], f"Expected no anomalies below threshold, got {len(results)}"
 
     def test_multiple_anomalous_ips(self, make_entry):
         entries = [make_entry(ip="10.0.0.1", status=403) for _ in range(5)]
@@ -34,8 +34,9 @@ class TestAnomalyDetector:
         detector = AnomalyDetector(error_threshold=5)
         results = detector.analyze(entries)
 
-        assert len(results) == 2
-        assert {r.ip for r in results} == {"10.0.0.1", "10.0.0.2"}
+        assert len(results) == 2, f"Expected 2 anomalous IPs, got {len(results)}"
+        ips = {r.ip for r in results}
+        assert ips >= {"10.0.0.1", "10.0.0.2"}, f"Missing expected IPs: {ips}"
 
     def test_results_sorted_by_total_errors_descending(self, make_entry):
         entries = [make_entry(ip="10.0.0.1", status=403) for _ in range(5)]
@@ -57,9 +58,8 @@ class TestAnomalyDetector:
 
         assert len(detector.analyze(entries)) == expected_count
 
-    def test_empty_entries_returns_empty_list(self):
-        detector = AnomalyDetector()
-        assert detector.analyze([]) == []
+    def test_empty_entries_returns_empty_list(self, anomaly_detector):
+        assert anomaly_detector.analyze([]) == []
 
     def test_error_rate_calculation(self, make_entry):
         entries = [make_entry(ip="10.0.0.1", status=500) for _ in range(3)]
