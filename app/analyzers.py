@@ -1,3 +1,9 @@
+"""Log analysis modules: anomaly detection, performance measurement, and security auditing.
+
+Each analyzer consumes a list of parsed LogEntry objects and produces
+structured result objects (dataclasses) with the analysis findings.
+"""
+
 import re
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -7,6 +13,7 @@ from app.models import LogEntry
 
 @dataclass
 class AnomalyResult:
+    """Result of anomaly detection for a single IP address."""
     ip: str
     total_errors: int
     client_errors: int
@@ -16,6 +23,7 @@ class AnomalyResult:
 
 
 class AnomalyDetector:
+    """Detects IPs with excessive HTTP error rates (4xx and 5xx)."""
     def __init__(self, error_threshold: int = 5):
         self.error_threshold = error_threshold
 
@@ -58,6 +66,7 @@ class AnomalyDetector:
 
 @dataclass
 class PerformanceResult:
+    """Response time statistics for a single endpoint (method + path)."""
     endpoint: str
     request_count: int
     avg_response_time: float
@@ -66,6 +75,7 @@ class PerformanceResult:
 
 
 class PerformanceAnalyzer:
+    """Aggregates response time statistics grouped by endpoint."""
     def analyze(self, entries: list[LogEntry]) -> list[PerformanceResult]:
         endpoint_stats: dict[str, dict[str, float | int]] = defaultdict(
             lambda: {"total_time": 0.0, "count": 0, "min": float("inf"), "max": 0.0}
@@ -103,6 +113,7 @@ class PerformanceAnalyzer:
 
 @dataclass
 class SecurityAlert:
+    """A detected security threat with its location and matched content."""
     path: str
     method: str
     ip: str
@@ -111,6 +122,7 @@ class SecurityAlert:
 
 
 class SecurityAuditor:
+    """Scans request paths for SQL Injection, XSS, and Path Traversal patterns."""
     PATTERNS: dict[str, str] = {
         "SQL Injection": r"(\bUNION\b|\bSELECT\b|\bDROP\b|\bINSERT\b|\bDELETE\b|\bUPDATE\b|--|\bOR\b\s+['\"]?\d['\"]?\s*=\s*['\"]?\d|')",
         "XSS": r"(<script|javascript:|onerror=|onload=|alert\(|document\.cookie)",
