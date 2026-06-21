@@ -1,3 +1,14 @@
+"""FastAPI application: REST API for log analysis.
+
+Endpoints:
+    GET  /            - HTML dashboard
+    GET  /health      - Health check
+    GET  /samples     - List available log scenarios
+    GET  /samples/{name} - Get a specific scenario's log text
+    POST /analyze     - Parse and analyze log text/file
+    POST /report      - Generate downloadable analysis report
+"""
+
 import io
 import os
 from pathlib import Path
