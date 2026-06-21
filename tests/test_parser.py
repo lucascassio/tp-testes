@@ -4,26 +4,24 @@ from app.parser import parse_line, parse_text, parse_timestamp, parse_request
 from app.models import LogEntry
 
 
-class TestParseLine:
-    LOG_OK = '192.168.1.1 - - [10/Oct/2023:13:55:36 -0300] "GET /api/users HTTP/1.1" 200 1234 "-" "Mozilla/5.0" 0.045'
-    LOG_EMPTY = ""
-    LOG_BLANK = "   "
-    LOG_MALFORMED = "this is not a log line at all"
-    LOG_NO_TIMESTAMP = '192.168.1.1 - - "GET / HTTP/1.1" 200 0 "-" "Mozilla"'
-    LOG_IPV6 = '::1 - - [10/Oct/2023:13:55:36 -0300] "GET / HTTP/1.1" 200 100 "-" "curl/7.0"'
-    LOG_POST = '10.0.0.1 - admin [10/Oct/2023:14:00:00 -0300] "POST /api/data HTTP/1.1" 201 500 "https://site.com" "Mozilla/5.0"'
-    LOG_500 = '10.0.0.2 - - [10/Oct/2023:14:01:00 -0300] "GET /error HTTP/1.1" 500 0 "-" "-"'
-    LOG_404 = '10.0.0.3 - - [10/Oct/2023:14:02:00 -0300] "GET /notfound HTTP/1.1" 404 50 "-" "Mozilla/5.0"'
-    LOG_QUERY = '10.0.0.4 - - [10/Oct/2023:14:03:00 -0300] "GET /search?q=hello&page=1 HTTP/1.1" 200 2000 "-" "Mozilla/5.0"'
-    LOG_HTTPS = '10.0.0.5 - - [10/Oct/2023:14:04:00 -0300] "GET https://example.com/page HTTP/1.1" 200 300 "-" "Mozilla/5.0"'
-    LOG_LONG_URL = '10.0.0.6 - - [10/Oct/2023:14:05:00 -0300] "GET /' + 'x' * 500 + ' HTTP/1.1" 200 100 "-" "Mozilla/5.0"'
-    LOG_NO_RT = '192.168.1.1 - - [10/Oct/2023:13:55:36 -0300] "GET /api/users HTTP/1.1" 200 1234 "-" "Mozilla/5.0"'
-    LOG_NEGATIVE_SIZE = '10.0.0.7 - - [10/Oct/2023:14:06:00 -0300] "GET / HTTP/1.1" 200 -1 "-" "Mozilla/5.0"'
-    LOG_BAD_STATUS = '10.0.0.7 - - [10/Oct/2023:14:06:00 -0300] "GET / HTTP/1.1" ABC 100 "-" "Mozilla/5.0"'
-    LOG_NON_NUMERIC_RT = '10.0.0.8 - - [10/Oct/2023:14:07:00 -0300] "GET / HTTP/1.1" 200 100 "-" "Mozilla/5.0" slow'
+LOG_OK = '192.168.1.1 - - [10/Oct/2023:13:55:36 -0300] "GET /api/users HTTP/1.1" 200 1234 "-" "Mozilla/5.0" 0.045'
+LOG_IPV6 = '::1 - - [10/Oct/2023:13:55:36 -0300] "GET / HTTP/1.1" 200 100 "-" "curl/7.0"'
+LOG_POST = '10.0.0.1 - admin [10/Oct/2023:14:00:00 -0300] "POST /api/data HTTP/1.1" 201 500 "https://site.com" "Mozilla/5.0"'
+LOG_500 = '10.0.0.2 - - [10/Oct/2023:14:01:00 -0300] "GET /error HTTP/1.1" 500 0 "-" "-"'
+LOG_404 = '10.0.0.3 - - [10/Oct/2023:14:02:00 -0300] "GET /notfound HTTP/1.1" 404 50 "-" "Mozilla/5.0"'
+LOG_QUERY = '10.0.0.4 - - [10/Oct/2023:14:03:00 -0300] "GET /search?q=hello&page=1 HTTP/1.1" 200 2000 "-" "Mozilla/5.0"'
+LOG_HTTPS = '10.0.0.5 - - [10/Oct/2023:14:04:00 -0300] "GET https://example.com/page HTTP/1.1" 200 300 "-" "Mozilla/5.0"'
+LOG_LONG_URL = '10.0.0.6 - - [10/Oct/2023:14:05:00 -0300] "GET /' + 'x' * 500 + ' HTTP/1.1" 200 100 "-" "Mozilla/5.0"'
+LOG_NO_RT = '192.168.1.1 - - [10/Oct/2023:13:55:36 -0300] "GET /api/users HTTP/1.1" 200 1234 "-" "Mozilla/5.0"'
+LOG_NEGATIVE_SIZE = '10.0.0.7 - - [10/Oct/2023:14:06:00 -0300] "GET / HTTP/1.1" 200 -1 "-" "Mozilla/5.0"'
+LOG_BAD_STATUS = '10.0.0.7 - - [10/Oct/2023:14:06:00 -0300] "GET / HTTP/1.1" ABC 100 "-" "Mozilla/5.0"'
+LOG_NON_NUMERIC_RT = '10.0.0.8 - - [10/Oct/2023:14:07:00 -0300] "GET / HTTP/1.1" 200 100 "-" "Mozilla/5.0" slow'
 
+
+class TestParseLine:
     def test_parse_valid_log_with_all_fields(self):
-        entry = parse_line(self.LOG_OK)
+        entry = parse_line(LOG_OK)
+
         assert entry is not None
         assert entry.remote_addr == "192.168.1.1"
         assert entry.remote_user == "-"
@@ -37,76 +35,88 @@ class TestParseLine:
         assert entry.http_user_agent == "Mozilla/5.0"
         assert entry.request_time == 0.045
 
-    def test_parse_empty_line_returns_none(self):
-        assert parse_line(self.LOG_EMPTY) is None
+    @pytest.mark.parametrize("line", [
+        "",
+        "   ",
+        "this is not a log line at all",
+        '192.168.1.1 - - "GET / HTTP/1.1" 200 0 "-" "Mozilla"',
+        LOG_BAD_STATUS,
+    ])
+    def test_invalid_lines_return_none(self, line):
+        assert parse_line(line) is None
 
-    def test_parse_blank_line_returns_none(self):
-        assert parse_line(self.LOG_BLANK) is None
-
-    def test_parse_malformed_line_returns_none(self):
-        assert parse_line(self.LOG_MALFORMED) is None
-
-    def test_parse_ipv6_address(self):
-        entry = parse_line(self.LOG_IPV6)
+    @pytest.mark.parametrize("line,expected_ip", [
+        (LOG_OK, "192.168.1.1"),
+        (LOG_IPV6, "::1"),
+    ])
+    def test_parse_ip_addresses(self, line, expected_ip):
+        entry = parse_line(line)
         assert entry is not None
-        assert entry.remote_addr == "::1"
+        assert entry.remote_addr == expected_ip
+
+    @pytest.mark.parametrize("line,expected_status,is_client,is_server,is_error", [
+        (LOG_500, 500, False, True, True),
+        (LOG_404, 404, True, False, True),
+    ])
+    def test_status_classification(self, line, expected_status, is_client, is_server, is_error):
+        entry = parse_line(line)
+        assert entry is not None
+        assert entry.status == expected_status
+        assert entry.is_client_error == is_client
+        assert entry.is_server_error == is_server
+        assert entry.is_error == is_error
 
     def test_parse_post_method(self):
-        entry = parse_line(self.LOG_POST)
+        entry = parse_line(LOG_POST)
         assert entry is not None
         assert entry.method == "POST"
         assert entry.path == "/api/data"
         assert entry.status == 201
         assert entry.remote_user == "admin"
 
-    def test_parse_500_server_error(self):
-        entry = parse_line(self.LOG_500)
-        assert entry is not None
-        assert entry.status == 500
-        assert entry.is_server_error is True
-        assert entry.is_client_error is False
-        assert entry.is_error is True
-
-    def test_parse_404_client_error(self):
-        entry = parse_line(self.LOG_404)
-        assert entry is not None
-        assert entry.status == 404
-        assert entry.is_client_error is True
-        assert entry.is_server_error is False
-        assert entry.is_error is True
-
     def test_parse_url_with_query_string(self):
-        entry = parse_line(self.LOG_QUERY)
+        entry = parse_line(LOG_QUERY)
         assert entry is not None
         assert entry.path == "/search?q=hello&page=1"
 
-    def test_parse_line_without_request_time_defaults_to_zero(self):
-        entry = parse_line(self.LOG_NO_RT)
+    def test_parse_https_url_in_request(self):
+        entry = parse_line(LOG_HTTPS)
         assert entry is not None
-        assert entry.request_time == 0.0
+        assert entry.path == "https://example.com/page"
+        assert entry.protocol == "HTTP/1.1"
+        assert entry.status == 200
 
-    def test_parse_log_entry_endpoint_property(self):
-        entry = parse_line(self.LOG_OK)
+    def test_parse_negative_body_bytes_returns_none(self):
+        entry = parse_line(LOG_NEGATIVE_SIZE)
+        assert entry is None
+
+    @pytest.mark.parametrize("line,expected_rt", [
+        (LOG_OK, 0.045),
+        (LOG_NO_RT, 0.0),
+        (LOG_NON_NUMERIC_RT, 0.0),
+    ])
+    def test_request_time_parsing(self, line, expected_rt):
+        entry = parse_line(line)
+        assert entry is not None
+        assert entry.request_time == expected_rt
+
+    def test_endpoint_property(self):
+        entry = parse_line(LOG_OK)
         assert entry is not None
         assert entry.endpoint == "GET /api/users"
 
-    def test_parse_log_with_long_url_does_not_crash(self):
-        entry = parse_line(self.LOG_LONG_URL)
+    def test_long_url_does_not_crash(self):
+        entry = parse_line(LOG_LONG_URL)
         assert entry is not None
         assert entry.path == "/" + "x" * 500
         assert entry.status == 200
 
-    def test_parse_all_fields_numeric_conversion(self):
-        entry = parse_line(self.LOG_OK)
+    def test_all_fields_numeric_conversion(self):
+        entry = parse_line(LOG_OK)
         assert entry is not None
         assert isinstance(entry.status, int)
         assert isinstance(entry.body_bytes_sent, int)
         assert isinstance(entry.request_time, float)
-
-    def test_non_numeric_request_time_defaults_to_zero(self):
-        entry = parse_line(self.LOG_NON_NUMERIC_RT)
-        assert entry is not None
-        assert entry.request_time == 0.0
 
 
 class TestParseText:
@@ -118,13 +128,12 @@ class TestParseText:
         entries = parse_text(text)
         assert len(entries) == 3
 
-    def test_parse_text_with_empty_string(self):
-        entries = parse_text("")
-        assert entries == []
-
-    def test_parse_text_with_only_whitespace(self):
-        entries = parse_text("\n\n\n")
-        assert entries == []
+    @pytest.mark.parametrize("text", [
+        "",
+        "\n\n\n",
+    ])
+    def test_parse_empty_or_whitespace_input(self, text):
+        assert parse_text(text) == []
 
     def test_parse_text_skips_invalid_lines(self):
         text = """192.168.1.1 - - [10/Oct/2023:13:55:36 -0300] "GET /a HTTP/1.1" 200 100 "-" "Mozilla"
@@ -133,10 +142,6 @@ this is garbage
 """
         entries = parse_text(text)
         assert len(entries) == 2
-
-    def test_parse_no_timestamp_line_returns_none(self):
-        entry = parse_line(TestParseLine.LOG_NO_TIMESTAMP)
-        assert entry is None
 
 
 class TestParseTimestamp:
@@ -168,35 +173,27 @@ class TestParseTimestamp:
 
 class TestParseRequest:
     def test_full_request(self):
-        m, p, proto = parse_request("GET /api/users HTTP/1.1")
-        assert m == "GET"
-        assert p == "/api/users"
-        assert proto == "HTTP/1.1"
+        method, path, protocol = parse_request("GET /api/users HTTP/1.1")
+        assert method == "GET"
+        assert path == "/api/users"
+        assert protocol == "HTTP/1.1"
 
-    def test_empty_request(self):
-        m, p, proto = parse_request("")
-        assert m == "" and p == "" and proto == ""
+    @pytest.mark.parametrize("raw,expected", [
+        ("", ("", "", "")),
+        ("GET", ("GET", "", "")),
+        ("GET /api/data", ("GET", "/api/data", "")),
+    ])
+    def test_request_edge_cases(self, raw, expected):
+        assert parse_request(raw) == expected
 
     def test_request_with_https_url(self):
-        m, p, proto = parse_request("GET https://example.com/page HTTP/1.1")
-        assert m == "GET"
-        assert p == "https://example.com/page"
-        assert proto == "HTTP/1.1"
-
-    def test_request_without_http_protocol(self):
-        m, p, proto = parse_request("GET /api/data")
-        assert m == "GET"
-        assert p == "/api/data"
-        assert proto == ""
-
-    def test_request_single_word(self):
-        m, p, proto = parse_request("GET")
-        assert m == "GET"
-        assert p == ""
-        assert proto == ""
+        method, path, protocol = parse_request("GET https://example.com/page HTTP/1.1")
+        assert method == "GET"
+        assert path == "https://example.com/page"
+        assert protocol == "HTTP/1.1"
 
     def test_request_with_spaces_in_url(self):
-        m, p, proto = parse_request("GET /search?q=hello world HTTP/1.1")
-        assert m == "GET"
-        assert p == "/search?q=hello world"
-        assert proto == "HTTP/1.1"
+        method, path, protocol = parse_request("GET /search?q=hello world HTTP/1.1")
+        assert method == "GET"
+        assert path == "/search?q=hello world"
+        assert protocol == "HTTP/1.1"
