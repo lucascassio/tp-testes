@@ -1,3 +1,13 @@
+"""Log line parser for Nginx/Apache combined log format.
+
+Parses raw log lines into structured LogEntry objects. Handles edge cases
+including IPv6 addresses, query strings, HTTPS URLs, missing request times,
+and non-numeric values (graceful fallback to 0.0).
+
+The combined log format expected is:
+    $remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" $request_time
+"""
+
 import re
 from datetime import datetime
 from typing import Optional
@@ -26,6 +36,11 @@ TIMESTAMP_FORMATS = [
 
 
 def parse_timestamp(raw: str) -> Optional[datetime]:
+    """Parse a timestamp string using multiple common formats.
+
+    Tries standard Apache format (with/without timezone) and ISO format.
+    Returns None if no format matches.
+    """
     for fmt in TIMESTAMP_FORMATS:
         try:
             return datetime.strptime(raw, fmt)
@@ -35,6 +50,11 @@ def parse_timestamp(raw: str) -> Optional[datetime]:
 
 
 def parse_request(raw: str) -> tuple[str, str, str]:
+    """Parse an HTTP request line into (method, path, protocol).
+
+    Handles edge cases: empty input, missing protocol, URLs with spaces,
+    and HTTPS URLs where the path starts with 'https://'.
+    """
     if not raw:
         return "", "", ""
     parts = raw.split(" ")
@@ -61,6 +81,7 @@ def _parse_request_time(raw: Optional[str]) -> float:
 
 
 def parse_line(line: str) -> Optional[LogEntry]:
+    """Parse a single log line into a LogEntry. Returns None if unparseable."""
     if not line or not line.strip():
         return None
 
@@ -103,6 +124,7 @@ def parse_line(line: str) -> Optional[LogEntry]:
 
 
 def parse_text(text: str) -> list[LogEntry]:
+    """Parse multi-line log text, skipping invalid lines."""
     entries: list[LogEntry] = []
     for line in text.splitlines():
         entry = parse_line(line)
