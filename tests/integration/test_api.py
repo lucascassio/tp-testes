@@ -124,3 +124,29 @@ class TestSamplesEndpoint:
         response = client.get("/samples/doesnotexist")
         assert response.status_code == 200
         assert "error" in response.json()
+
+    def test_sample_endpoints_content_type_is_json(self, client):
+        response = client.get("/samples/normal")
+        assert response.status_code == 200
+        assert "application/json" in response.headers["content-type"]
+
+
+class TestTemplateAndStatic:
+    def test_template_file_exists(self):
+        from pathlib import Path
+        template = Path(__file__).parent.parent.parent / "app" / "templates" / "index.html"
+        assert template.exists(), f"Template not found at {template}"
+        content = template.read_text(encoding="utf-8")
+        assert len(content) > 0
+        assert "<html" in content.lower()
+
+    def test_home_response_has_correct_content_type(self, client):
+        response = client.get("/")
+        assert response.status_code == 200
+        assert "text/html" in response.headers["content-type"]
+
+    def test_upload_directory_is_created(self):
+        from pathlib import Path
+        upload_dir = Path(__file__).parent.parent.parent / "uploads"
+        assert upload_dir.exists()
+        assert upload_dir.is_dir()
