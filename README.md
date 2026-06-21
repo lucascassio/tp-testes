@@ -7,29 +7,29 @@
 - Rafael Chimicatti
 
 ## 2. Explicação do Sistema
-O **LogAnalyzer** é uma aplicação web desenvolvida para processar e analisar arquivos de log de servidores web (como Nginx ou Apache). O sistema consome arquivos de texto bruto contendo logs no formato *combined* e exibe os resultados diretamente no navegador.
-
-O sistema extrai métricas vitais e identifica anomalias, incluindo:
-
-- **Detecção de Anomalias de Tráfego:** Identificação de IPs com excesso de erros `4xx` ou `5xx` (indicativo de ataques de força bruta ou *rate limiting*).
-- **Análise de Performance:** Cálculo do tempo médio de resposta para cada *endpoint* da API.
-- **Auditoria de Segurança:** Varredura nas URLs acessadas para alertar sobre requisições suspeitas, como padrões de *SQL Injection*, *Cross-Site Scripting* (XSS) e *Path Traversal*.
+O **LogAnalyzer** é uma aplicação web para processar e analisar arquivos de log de servidores web (Nginx/Apache) no formato *combined*. O sistema consome logs brutos e exibe métricas diretamente no navegador.
 
 ### Funcionalidades
-- Upload de arquivo de log via drag-and-drop ou seleção de arquivo
-- Entrada de logs via área de texto (*paste*)
-- Dashboard interativo com abas para: Log Entries, Anomalies, Performance e Security
-- Download do relatório completo em formato texto
-- Amostra de dados pré-carregada para testes rápidos
+- **Detecção de Anomalias de Tráfego:** IPs com excesso de erros 4xx/5xx (força bruta, rate limiting)
+- **Análise de Performance:** Tempo médio de resposta por endpoint da API
+- **Auditoria de Segurança:** Varredura de URLs para SQL Injection, XSS e Path Traversal
+- Upload de arquivo via drag-and-drop ou seleção
+- Entrada de logs via área de texto (paste)
+- Dashboard interativo com abas: Entries, Anomalies, Performance, Security
+- Download do relatório completo em texto
+- 7 cenários de amostra pré-carregados para testes rápidos
 
 ## 3. Tecnologias Utilizadas
-- **Python 3.11** — Linguagem de programação principal
-- **FastAPI** — Framework web para a API REST
-- **Pytest** — Framework de testes unitários e de integração
-- **Coverage.py / pytest-cov** — Medição de cobertura de código
+- **Python 3.11** — Linguagem principal
+- **FastAPI** — Framework web para API REST
+- **Pytest** — Framework de testes (parametrize, fixtures, markers)
+- **Hypothesis** — Property-based testing (fuzz testing com dados gerados)
+- **Coverage.py / pytest-cov** — Medição de cobertura
+- **HTTPX** — Cliente HTTP para testes e2e com servidor real
+- **Uvicorn** — Servidor ASGI (produção e testes e2e)
 - **HTML/CSS/JS Vanilla** — Frontend sem dependências externas
-- **GitHub Actions** — CI/CD automatizado em Linux, macOS e Windows
-- **Codecov** — Publicação de relatórios de cobertura online
+- **GitHub Actions** — CI/CD em Linux, macOS e Windows
+- **Codecov** — Relatórios de cobertura online
 
 ## 4. Como Executar os Testes Localmente
 
@@ -47,12 +47,19 @@ pip install -r requirements.txt
 pytest tests/ -v
 ```
 
-### Executar testes com cobertura
+### Executar por camada (markers)
+```bash
+pytest tests/ -m unit          # 82 testes de unidade (rápidos, isolados)
+pytest tests/ -m integration   # 69 testes de integração (HTTP via TestClient)
+pytest tests/ -m e2e           # 15 testes e2e (servidor uvicorn real)
+```
+
+### Executar com cobertura
 ```bash
 pytest tests/ --cov=app --cov-report=term-missing
 ```
 
-### Gerar relatório de cobertura em XML (para Codecov)
+### Gerar relatório XML (para Codecov)
 ```bash
 pytest tests/ --cov=app --cov-report=xml
 ```
@@ -61,78 +68,62 @@ pytest tests/ --cov=app --cov-report=xml
 ```bash
 uvicorn app.main:app --reload
 ```
-Acesse http://localhost:8000 no navegador.
+Acesse http://localhost:8000
 
 ## 5. Estrutura do Projeto
 ```
 ├── app/
 │   ├── __init__.py
-│   ├── main.py          # Aplicação FastAPI
-│   ├── models.py        # Modelo de dados LogEntry
-│   ├── parser.py        # Parser de logs Nginx/Apache
-│   ├── analyzers.py     # Analisadores (anomalias, performance, segurança)
-│   ├── reporters.py     # Geradores de relatório CSV
+│   ├── main.py              # Aplicação FastAPI (endpoints REST)
+│   ├── models.py            # Modelo de dados LogEntry (dataclass)
+│   ├── parser.py            # Parser de logs Nginx/Apache (regex)
+│   ├── analyzers.py         # Analisadores (anomalias, performance, segurança)
+│   ├── reporters.py         # Geradores de relatório CSV
+│   ├── samples.py           # 7 cenários de log pré-gerados
 │   └── templates/
-│       └── index.html   # Frontend vanilla
+│       └── index.html       # Frontend vanilla (HTML/CSS/JS)
 ├── tests/
-│   ├── __init__.py
-│   ├── test_parser.py              # 25 testes de unidade
-│   ├── test_anomaly_detector.py    # 9 testes de unidade
-│   ├── test_performance_analyzer.py # 7 testes de unidade
-│   ├── test_security_auditor.py    # 11 testes de unidade
-│   ├── test_reporters.py           # 8 testes de unidade
-│   └── test_integration.py         # 8 testes de integração
-├── .github/workflows/tests.yml     # CI/CD
+│   ├── conftest.py                    # Fixtures compartilhados (make_entry, etc)
+│   ├── unit/
+│   │   ├── test_parser.py             # 35 testes — parsing de logs
+│   │   ├── test_anomaly_detector.py   # 10 testes — detecção de anomalias
+│   │   ├── test_security_auditor.py   # 15 testes — auditoria de segurança
+│   │   ├── test_performance_analyzer.py # 8 testes — análise de performance
+│   │   ├── test_reporters.py          # 8 testes — geração de CSV/relatórios
+│   │   └── test_property.py           # 7 testes — property-based (Hypothesis)
+│   ├── integration/
+│   │   ├── conftest.py                # Fixture TestClient
+│   │   ├── test_api.py                # 16 testes — endpoints HTTP
+│   │   └── test_samples.py            # 53 testes — cenários com analisadores reais
+│   └── e2e/
+│       ├── conftest.py                # Fixture live_server (uvicorn + polling)
+│       └── test_pipeline.py           # 15 testes — servidor real + httpx
+├── .github/workflows/tests.yml        # CI/CD (Linux, macOS, Windows + Codecov)
+├── pytest.ini                         # Config pytest (markers)
 ├── requirements.txt
-├── .coveragerc
 └── README.md
 ```
 
-## 6. Evidência do Valor dos Testes Automatizados
+## 6. Estratégia de Testes
 
-A arquitetura do sistema foi projetada com **separação estrita de responsabilidades**, o que permite testar cada camada de forma isolada e garante que mudanças em um módulo não quebrem outros. Esta seção demonstra, com exemplos concretos, como a suíte de testes previne regressões.
+### 6.1 Três Camadas de Teste
 
-### 6.1 Camadas Independentes e Testáveis
+| Camada | Framework | Quantidade | O que testa |
+|--------|-----------|-----------|-------------|
+| **Unit** | Pytest + Hypothesis | 82 | Funções isoladas, sem dependências externas |
+| **Integration** | TestClient (FastAPI) | 69 | Múltiplos componentes reais, HTTP stack |
+| **E2E** | Uvicorn + HTTPX | 15 | Servidor real, porta livre, polling de readiness |
 
-| Camada | Módulo | O que testa | Por que é importante |
-|--------|--------|-------------|---------------------|
-| Parsing | `parser.py` | Interpretação de cada linha de log | Erros de parsing quebrariam toda análise |
-| Negócio | `analyzers.py` | Regras de anomalia, performance, segurança | Lógica crítica que não pode regredir |
-| Relatório | `reporters.py` | Geração de CSV/relatórios | Formato de saída deve ser consistente |
-| Infra/API | `main.py` | Endpoints HTTP, upload, respostas | Interface com o usuário final |
+### 6.2 Técnicas Utilizadas
+- **Parametrize:** Testes de SQLi, XSS, Traversal agrupados em um método com `@pytest.mark.parametrize`
+- **Fixtures:** `make_entry` factory, `sample_multiline_log`, analyzers pré-configurados
+- **Markers:** `unit`, `integration`, `e2e` para filtragem por camada
+- **Property-based testing:** Hypothesis gera centenas de entradas aleatórias para validar invariantes do parser e auditor de segurança
+- **Assert messages:** Toda assertion multi-campo inclui mensagem descritiva de falha
+- **Superset assertions:** `assert result >= expected` em vez de igualdade exata (resiliente a novos campos)
 
-### 6.2 Edge Cases Cobertos pelo Parser (25 testes)
-
-O parser é a porta de entrada. Se falhar, tudo falha. Por isso é o módulo com mais testes:
-
-| Edge Case | Exemplo de Entrada | Comportamento Esperado | Evita |
-|-----------|-------------------|----------------------|-------|
-| Linha vazia | `""` | Retorna `None` | Crash ao processar arquivos com linhas em branco |
-| Linha malformada | `"texto qualquer"` | Retorna `None` | Interpretar lixo como log válido |
-| IPv6 | `::1 - - [...]` | Extrai `::1` corretamente | Ignorar tráfego IPv6 |
-| URL com espaços | `/search?q=hello world` | Preserva espaços na URL | Perder parte da query string |
-| Request sem HTTP | `GET /api/data` | Protocol vazio, path preservado | Falhar em formatos não-padrão |
-| Timestamp inválido | `"not-a-date"` | `timestamp = None` | Crash na conversão de data |
-| Response time não numérico | `"slow"` como último campo | `request_time = 0.0` | Crash na conversão numérica |
-| Status code não numérico | `ABC` como status | Retorna `None` (linha inválida) | Corromper estatísticas |
-
-### 6.3 Exemplo Concreto de Prevenção de Regressão
-
-Durante o desenvolvimento, o `parse_request()` original usava `split(" ", 2)` para separar método, path e protocolo. Isso funcionava para URLs simples como `/api/users`, mas **quebrava silenciosamente** com URLs contendo espaços (ex: `/search?q=hello world`), truncando o path.
-
-O teste `test_request_with_spaces_in_url` foi adicionado especificamente para este caso:
-
-```python
-def test_request_with_spaces_in_url(self):
-    m, p, proto = parse_request("GET /search?q=hello world HTTP/1.1")
-    assert p == "/search?q=hello world"  # Garante path completo
-```
-
-Após refatorar `parse_request()` para usar um algoritmo que identifica o protocolo pelo último token (em vez de assumir 3 tokens fixos), **todos os 25 testes do parser continuaram passando**, comprovando que a refatoração não introduziu regressões.
-
-### 6.4 Cobertura como Rede de Segurança
-
-A suíte atual conta com **78 testes** (70 unitários + 8 integração) e **99% de cobertura de código**. Cada linha não coberta é uma oportunidade para um bug não detectado. As 2 linhas restantes não cobertas (`parser.py:42,88-89`) são branches defensivos para casos extremos de arrays vazios que exigiriam manipulação interna da implementação para serem acionados.
+### 6.3 Cobertura como Rede de Segurança
+A suíte atual conta com **166 testes** e **100% de cobertura** (linhas e branches). Durante o desenvolvimento, a cobertura guiou a adição de testes para código não exercitado (ex: geradores de cenários em `samples.py` estavam em 25%).
 
 ## 7. CI/CD e Cobertura
 Os testes são executados automaticamente a cada commit via **GitHub Actions** nos sistemas operacionais **Linux**, **macOS** e **Windows**. O relatório de cobertura é enviado para o **Codecov**.
@@ -141,5 +132,7 @@ Os testes são executados automaticamente a cada commit via **GitHub Actions** n
 [![codecov](https://codecov.io/github/lucascassio/tp-testes/branch/main/graph/badge.svg)](https://codecov.io/github/lucascassio/tp-testes)
 
 ## 8. Métricas de Teste
-- **78 testes** no total (70 unitários + 8 integração)
-- **99% de cobertura** de código
+- **166 testes** no total (82 unitários + 69 integração + 15 e2e)
+- **100% de cobertura** de código (linhas e branches)
+- **7 cenários** de log pré-gerados testados exaustivamente
+- **3 sistemas operacionais** na CI (Linux, macOS, Windows)
