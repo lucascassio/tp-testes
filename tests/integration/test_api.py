@@ -99,6 +99,13 @@ class TestFileUpload:
         assert response.status_code == 200
         assert "TRAFFIC ANOMALIES" in response.text
 
+    def test_analyze_with_file_no_filename(self, client, sample_multiline_log):
+        response = client.post(
+            "/analyze",
+            files={"file": ("", sample_multiline_log.encode(), "text/plain")},
+        )
+        assert response.status_code == 422
+
 
 class TestSamplesEndpoint:
     def test_list_samples_returns_scenarios(self, client):

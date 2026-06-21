@@ -145,6 +145,15 @@ this is garbage
         entries = parse_text(text)
         assert len(entries) == 2
 
+    def test_parse_text_with_empty_lines_in_middle(self):
+        text = """192.168.1.1 - - [10/Oct/2023:13:55:36 -0300] "GET /a HTTP/1.1" 200 100 "-" "Mozilla"
+
+192.168.1.2 - - [10/Oct/2023:13:55:37 -0300] "GET /b HTTP/1.1" 200 200 "-" "Mozilla"
+
+"""
+        entries = parse_text(text)
+        assert len(entries) == 2
+
 
 class TestParseTimestamp:
     def test_standard_format_with_timezone(self):
@@ -199,3 +208,17 @@ class TestParseRequest:
         assert method == "GET"
         assert path == "/search?q=hello world"
         assert protocol == "HTTP/1.1"
+
+    def test_request_method_case_is_preserved(self):
+        method, path, protocol = parse_request("GET /api HTTP/1.1")
+        assert method == "GET"
+
+        method, path, protocol = parse_request("post /api HTTP/1.1")
+        assert method == "post"
+
+    def test_request_protocol_case_insensitive(self):
+        method, path, protocol = parse_request("GET /api http/1.1")
+        assert protocol == "http/1.1"
+
+        method, path, protocol = parse_request("GET /api HTTP/2.0")
+        assert protocol == "HTTP/2.0"
