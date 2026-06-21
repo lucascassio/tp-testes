@@ -1,4 +1,13 @@
-"""Shared fixtures available to all test layers."""
+"""Shared fixtures available to all test layers — unit, integration, and e2e.
+
+Fixtures:
+    make_entry            — Factory for building LogEntry objects with defaults
+    valid_log_line        — Single well-formed Apache combined log line
+    sample_multiline_log  — 5-line log with 401/500 errors for anomaly detection
+    anomaly_detector      — Pre-configured AnomalyDetector (threshold=5)
+    performance_analyzer  — Pre-configured PerformanceAnalyzer
+    security_auditor      — Pre-configured SecurityAuditor
+"""
 import pytest
 from datetime import datetime
 
