@@ -1,3 +1,5 @@
+"""CSV and plain-text report generators for analysis results."""
+
 import csv
 import io
 from typing import Optional
@@ -6,6 +8,7 @@ from app.analyzers import AnomalyResult, PerformanceResult, SecurityAlert
 
 
 def generate_anomalies_csv(anomalies: list[AnomalyResult]) -> str:
+    """Generate CSV with anomaly detection results."""
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(["IP", "Total Errors", "Client Errors (4xx)", "Server Errors (5xx)", "Total Requests", "Error Rate"])
