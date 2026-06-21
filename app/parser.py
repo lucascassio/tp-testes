@@ -38,8 +38,6 @@ def parse_request(raw: str) -> tuple[str, str, str]:
     if not raw:
         return "", "", ""
     parts = raw.split(" ")
-    if len(parts) == 0:
-        return "", "", ""
     method = parts[0]
     protocol = ""
     path = ""
@@ -82,11 +80,8 @@ def parse_line(line: str) -> Optional[LogEntry]:
 
     timestamp = parse_timestamp(timestamp_raw)
 
-    try:
-        status = int(status_str)
-        body_bytes_sent = int(body_bytes_str)
-    except ValueError:
-        return None
+    status = int(status_str)
+    body_bytes_sent = int(body_bytes_str)
 
     method, path, protocol = parse_request(request_raw)
     request_time = _parse_request_time(request_time_raw)
